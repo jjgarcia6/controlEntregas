@@ -1,21 +1,24 @@
 import functools
 import uuid
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar
+from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def auditar(accion: str, entidad: str) -> Callable[..., Any]:
+
+def auditar(accion: str, entidad: str) -> Callable[[F], F]:
     """
-    Decorator asíncrono que escribe un registro en audit_log al final
-    de la función decorada. La función decorada debe recibir `session`
-    como kwarg y opcionalmente `entidad_id`, `payload_antes`, `payload_despues`.
+    Async decorator that writes an audit_log entry after the decorated function.
+    The decorated function must receive `session` as a kwarg and optionally
+    `entidad_id`, `payload_antes`, `payload_despues`, `usuario_id`.
     """
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    def decorator(func: F) -> F:
         @functools.wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             result = await func(*args, **kwargs)
@@ -41,6 +44,6 @@ def auditar(accion: str, entidad: str) -> Callable[..., Any]:
 
             return result
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator

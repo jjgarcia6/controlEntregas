@@ -28,6 +28,12 @@ class EliminacionBloqueada(Exception):
         self.message = message
 
 
+class NoAutenticado(Exception):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
 class PermisoInsuficiente(Exception):
     def __init__(self, message: str) -> None:
         super().__init__(message)

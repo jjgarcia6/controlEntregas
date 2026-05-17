@@ -1,7 +1,9 @@
 import {
   BarChart3,
   Building2,
+  ClipboardList,
   FileText,
+  FileUp,
   LayoutDashboard,
   Package,
   Truck,
@@ -46,10 +48,16 @@ const navItems: NavItem[] = [
     roles: ["admin", "operador"],
   },
   {
+    label: "XML Pendientes",
+    icon: ClipboardList,
+    href: "/xml/pendientes",
+    roles: ["admin", "operador"],
+  },
+  {
     label: "Kardex",
     icon: Package,
     href: "/kardex",
-    roles: ["admin", "operador"],
+    roles: ["admin", "operador", "lectura"],
   },
   {
     label: "Entregas",
@@ -58,10 +66,16 @@ const navItems: NavItem[] = [
     roles: ["admin", "operador", "lectura"],
   },
   {
-    label: "XMLs",
-    icon: FileText,
-    href: "/xmls",
+    label: "Ingreso XML",
+    icon: FileUp,
+    href: "/xml/ingreso",
     roles: ["admin", "operador"],
+  },
+  {
+    label: "Lista XML",
+    icon: FileText,
+    href: "/xml/lista",
+    roles: ["admin", "operador", "lectura"],
   },
   {
     label: "Reportes",
