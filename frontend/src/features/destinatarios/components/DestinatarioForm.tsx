@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ function CreateForm({
     },
   });
 
-  const identificacion = form.watch("identificacion");
+  const identificacion = useWatch({ control: form.control, name: "identificacion" }) ?? "";
   const { refetch, isFetching } = useSearchDestinatario(identificacion);
 
   const handleIdBlur = async () => {
