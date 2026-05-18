@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test -d test_db"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      - name: Install system libs (WeasyPrint)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf2.0-0 libffi-dev
+      - name: Install pip deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Lint (ruff) + format check (black)
+        run: |
+          pip install ruff black
+          ruff check backend/app tests || true
+          black --check backend/app tests || true
+      - name: Type check (mypy)
+        run: |
+          pip install mypy
+          mypy backend/app || true
+      - name: Security scan (bandit)
+        run: |
+          pip install bandit
+          bandit -r backend/app || true
+      - name: Run backend tests
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+        run: |
+          pip install pytest pytest-asyncio
+          cd backend
+          pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Lint
+        run: |
+          cd frontend
+          npm run lint || true
+      - name: Typecheck
+        run: |
+          cd frontend
+          npm run typecheck || true
+      - name: Build
+        run: |
+          cd frontend
+          npm run build
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --runInBand
