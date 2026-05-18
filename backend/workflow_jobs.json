@@ -1,0 +1,261 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 76495357957,
+      "run_id": 26024567302,
+      "workflow_name": "CI",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/jjgarcia6/controlEntregas/actions/runs/26024567302",
+      "run_attempt": 2,
+      "node_id": "CR_kwDOSWrY188AAAARz3qIBQ",
+      "head_sha": "273b306850c27cdb0a0cee753e3eb32e7a4a244e",
+      "url": "https://api.github.com/repos/jjgarcia6/controlEntregas/actions/jobs/76495357957",
+      "html_url": "https://github.com/jjgarcia6/controlEntregas/actions/runs/26024567302/job/76495357957",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2026-05-18T09:23:25Z",
+      "started_at": "2026-05-18T09:23:28Z",
+      "completed_at": "2026-05-18T09:25:20Z",
+      "name": "backend",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-05-18T09:23:28Z",
+          "completed_at": "2026-05-18T09:23:29Z"
+        },
+        {
+          "name": "Initialize containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-05-18T09:23:29Z",
+          "completed_at": "2026-05-18T09:23:50Z"
+        },
+        {
+          "name": "Run actions/checkout@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-05-18T09:23:50Z",
+          "completed_at": "2026-05-18T09:23:51Z"
+        },
+        {
+          "name": "Setup Python",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-05-18T09:23:51Z",
+          "completed_at": "2026-05-18T09:23:51Z"
+        },
+        {
+          "name": "Install system libs (WeasyPrint)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-05-18T09:23:51Z",
+          "completed_at": "2026-05-18T09:24:01Z"
+        },
+        {
+          "name": "Install pip deps",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-05-18T09:24:01Z",
+          "completed_at": "2026-05-18T09:24:18Z"
+        },
+        {
+          "name": "Lint (ruff) + format check (black)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-05-18T09:24:18Z",
+          "completed_at": "2026-05-18T09:24:21Z"
+        },
+        {
+          "name": "Type check (mypy)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-05-18T09:24:21Z",
+          "completed_at": "2026-05-18T09:24:35Z"
+        },
+        {
+          "name": "Security scan (bandit)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-05-18T09:24:35Z",
+          "completed_at": "2026-05-18T09:24:37Z"
+        },
+        {
+          "name": "Run backend tests",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 10,
+          "started_at": "2026-05-18T09:24:37Z",
+          "completed_at": "2026-05-18T09:25:17Z"
+        },
+        {
+          "name": "Post Setup Python",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18,
+          "started_at": "2026-05-18T09:25:17Z",
+          "completed_at": "2026-05-18T09:25:17Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-05-18T09:25:17Z",
+          "completed_at": "2026-05-18T09:25:17Z"
+        },
+        {
+          "name": "Stop containers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-05-18T09:25:17Z",
+          "completed_at": "2026-05-18T09:25:17Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-05-18T09:25:17Z",
+          "completed_at": "2026-05-18T09:25:18Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/jjgarcia6/controlEntregas/check-runs/76495357957",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000368,
+      "runner_name": "GitHub Actions 1000000368",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 76495358602,
+      "run_id": 26024567302,
+      "workflow_name": "CI",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/jjgarcia6/controlEntregas/actions/runs/26024567302",
+      "run_attempt": 2,
+      "node_id": "CR_kwDOSWrY188AAAARz3qKig",
+      "head_sha": "273b306850c27cdb0a0cee753e3eb32e7a4a244e",
+      "url": "https://api.github.com/repos/jjgarcia6/controlEntregas/actions/jobs/76495358602",
+      "html_url": "https://github.com/jjgarcia6/controlEntregas/actions/runs/26024567302/job/76495358602",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-05-18T09:23:25Z",
+      "started_at": "2026-05-18T09:17:59Z",
+      "completed_at": "2026-05-18T09:18:41Z",
+      "name": "frontend",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-05-18T09:18:00Z",
+          "completed_at": "2026-05-18T09:18:01Z"
+        },
+        {
+          "name": "Run actions/checkout@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-05-18T09:18:01Z",
+          "completed_at": "2026-05-18T09:18:02Z"
+        },
+        {
+          "name": "Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-05-18T09:18:02Z",
+          "completed_at": "2026-05-18T09:18:04Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-05-18T09:18:04Z",
+          "completed_at": "2026-05-18T09:18:10Z"
+        },
+        {
+          "name": "Lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-05-18T09:18:10Z",
+          "completed_at": "2026-05-18T09:18:15Z"
+        },
+        {
+          "name": "Typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-05-18T09:18:15Z",
+          "completed_at": "2026-05-18T09:18:22Z"
+        },
+        {
+          "name": "Build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-05-18T09:18:22Z",
+          "completed_at": "2026-05-18T09:18:30Z"
+        },
+        {
+          "name": "Run frontend tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-05-18T09:18:30Z",
+          "completed_at": "2026-05-18T09:18:38Z"
+        },
+        {
+          "name": "Post Setup Node",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-05-18T09:18:38Z",
+          "completed_at": "2026-05-18T09:18:38Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-05-18T09:18:38Z",
+          "completed_at": "2026-05-18T09:18:38Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-05-18T09:18:38Z",
+          "completed_at": "2026-05-18T09:18:38Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/jjgarcia6/controlEntregas/check-runs/76495358602",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000366,
+      "runner_name": "GitHub Actions 1000000366",
+      "runner_group_id": null,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}
