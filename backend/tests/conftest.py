@@ -1,4 +1,6 @@
 import os
+import bcrypt
+from sqlalchemy import text
 
 import pytest_asyncio
 from dotenv import load_dotenv
@@ -9,6 +11,7 @@ from sqlalchemy.pool import NullPool
 load_dotenv()  # must run before os.getenv below
 
 from app.dependencies.db import get_db  # noqa: E402
+from app.config import settings  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.base import Base  # noqa: E402
 
@@ -37,6 +40,24 @@ _SHARED_DB = (
 async def setup_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        password_hash = bcrypt.hashpw(
+            settings.ADMIN_PASSWORD.encode(), bcrypt.gensalt()
+        ).decode()
+        await conn.execute(
+            text(
+                """
+                INSERT INTO usuarios (email, password_hash, nombre, rol, is_active)
+                VALUES (:email, :password_hash, :nombre, :rol, true)
+                ON CONFLICT (email) DO NOTHING
+                """
+            ),
+            {
+                "email": settings.ADMIN_EMAIL,
+                "password_hash": password_hash,
+                "nombre": "Administrador",
+                "rol": "admin",
+            },
+        )
     yield
     if not _SHARED_DB:
         async with test_engine.begin() as conn:
