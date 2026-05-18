@@ -9,6 +9,11 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+      TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
+      JWT_SECRET_KEY: ci-secret-key
+      ADMIN_PASSWORD: ci-admin-password
     services:
       postgres:
         image: postgres:15
@@ -50,8 +55,6 @@ jobs:
           pip install bandit
           bandit -r backend/app || true
       - name: Run backend tests
-        env:
-          TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/test_db
         run: |
           pip install pytest pytest-asyncio
           cd backend
