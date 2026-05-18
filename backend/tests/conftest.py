@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import bcrypt
 import pytest_asyncio
@@ -15,8 +16,8 @@ from app.dependencies.db import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.base import Base  # noqa: E402
 
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
     "postgresql+asyncpg://postgres:postgres@localhost:5432/control_entregas_test",
 )
 
@@ -24,16 +25,14 @@ TEST_DATABASE_URL = os.getenv(
 # NullPool prevents SQLAlchemy from holding connections across transactions.
 # statement_cache_size=0 disables prepared statements incompatible with PgBouncer.
 test_engine = create_async_engine(
-    TEST_DATABASE_URL,
+    DATABASE_URL,
     echo=False,
     poolclass=NullPool,
     connect_args={"statement_cache_size": 0},
 )
 
 # Skip destructive teardown when running against a shared DB such as Supabase.
-_SHARED_DB = (
-    "localhost" not in TEST_DATABASE_URL and "127.0.0.1" not in TEST_DATABASE_URL
-)
+_SHARED_DB = "localhost" not in DATABASE_URL and "127.0.0.1" not in DATABASE_URL
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -45,11 +44,12 @@ async def setup_database():
         ).decode()
         await conn.execute(
             text("""
-                INSERT INTO usuarios (email, password_hash, nombre, rol, is_active)
-                VALUES (:email, :password_hash, :nombre, :rol, true)
+                INSERT INTO usuarios (id, email, password_hash, nombre, rol, is_active)
+                VALUES (:id, :email, :password_hash, :nombre, :rol, true)
                 ON CONFLICT (email) DO NOTHING
                 """),
             {
+                "id": uuid.uuid4(),
                 "email": settings.ADMIN_EMAIL,
                 "password_hash": password_hash,
                 "nombre": "Administrador",
