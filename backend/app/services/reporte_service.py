@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal, cast
 
 import jinja2
 import openpyxl
@@ -110,6 +110,7 @@ def _to_pdf(template_name: str, context: dict) -> bytes:  # type: ignore[type-ar
 def _to_xlsx(titulo: str, headers: list[str], filas: list[list[object]]) -> bytes:
     wb = openpyxl.Workbook()
     ws = wb.active
+    assert ws is not None
     ws.title = titulo[:31]  # Excel sheet name limit
 
     bold = openpyxl.styles.Font(bold=True)
@@ -121,7 +122,8 @@ def _to_xlsx(titulo: str, headers: list[str], filas: list[list[object]]) -> byte
 
     for row_idx, fila in enumerate(filas, start=2):
         for col_idx, value in enumerate(fila, start=1):
-            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell_value = cast(Any, value)
+            cell = ws.cell(row=row_idx, column=col_idx, value=cell_value)
             if isinstance(value, Decimal):
                 cell.number_format = money_fmt
                 ws.cell(row=row_idx, column=col_idx, value=float(value))
