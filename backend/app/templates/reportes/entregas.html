@@ -9,10 +9,10 @@
 <table>
   <thead>
     <tr>
-      <th>#</th>
       <th>Fecha</th>
-      <th>Destinatario</th>
+      <th>#</th>
       <th>Identificación</th>
+      <th>Destinatario</th>
       <th>Total</th>
       <th>Pendiente</th>
       <th>Estado</th>
@@ -21,10 +21,10 @@
   <tbody>
     {% for fila in reporte.filas %}
     <tr>
-      <td>{{ fila.numero }}</td>
       <td>{{ fila.fecha_creacion }}</td>
-      <td>{{ fila.snap_nombre }}</td>
+      <td>{{ fila.numero }}</td>
       <td>{{ fila.snap_identificacion }}</td>
+      <td>{{ fila.snap_nombre }}</td>
       <td style="text-align:right">${{ "%.2f"|format(fila.total_entrega) }}</td>
       <td style="text-align:right">${{ "%.2f"|format(fila.saldo_pendiente) }}</td>
       <td class="tag-{{ fila.estado }}">{{ fila.estado }}</td>

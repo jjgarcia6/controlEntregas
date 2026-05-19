@@ -1,12 +1,34 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+const NUMERIC_COLUMNS = new Set([
+  "cantidad",
+  "costo_unitario",
+  "costo_total",
+  "saldo_cantidad",
+  "saldo_valor",
+  "total_sin_impuestos",
+  "importe_total",
+  "total_entrega",
+  "saldo_pendiente",
+  "valor_total",
+  "numero",
+  "fecha_creacion",
+  "nombre",
+  "identificacion",
+  "estado",
+]);
+
 interface ReporteTableProps {
   columnas: string[];
   filas: Record<string, unknown>[];
   isLoading: boolean;
 }
 
-export function ReporteTable({ columnas, filas, isLoading }: ReporteTableProps) {
+export function ReporteTable({
+  columnas,
+  filas,
+  isLoading,
+}: ReporteTableProps) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -30,14 +52,19 @@ export function ReporteTable({ columnas, filas, isLoading }: ReporteTableProps) 
       <table className="min-w-full text-sm">
         <thead className="bg-muted/50">
           <tr>
-            {columnas.map((col) => (
-              <th
-                key={col}
-                className="whitespace-nowrap px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                {col}
-              </th>
-            ))}
+            {columnas.map((col) => {
+              const isNumeric = NUMERIC_COLUMNS.has(col);
+              return (
+                <th
+                  key={col}
+                  className={`whitespace-nowrap px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide ${
+                    isNumeric ? "text-right" : "text-left"
+                  }`}
+                >
+                  {col}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -46,11 +73,19 @@ export function ReporteTable({ columnas, filas, isLoading }: ReporteTableProps) 
               key={rowIdx}
               className="border-t border-border odd:bg-background even:bg-muted/20 hover:bg-muted/40 transition-colors"
             >
-              {columnas.map((col) => (
-                <td key={col} className="whitespace-nowrap px-4 py-2 text-foreground">
-                  {String(fila[col] ?? "")}
-                </td>
-              ))}
+              {columnas.map((col) => {
+                const isNumeric = NUMERIC_COLUMNS.has(col);
+                return (
+                  <td
+                    key={col}
+                    className={`whitespace-nowrap px-4 py-2 text-foreground ${
+                      isNumeric ? "text-right" : ""
+                    }`}
+                  >
+                    {String(fila[col] ?? "")}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

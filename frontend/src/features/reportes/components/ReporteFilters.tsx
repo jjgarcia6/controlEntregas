@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFetchBancos } from "@/features/bancos/hooks/useFetchBancos";
 import { useFetchProductos } from "@/features/kardex/hooks/useFetchProductos";
+import { useFetchEntregas } from "@/features/entregas/hooks/useFetchEntregas";
 import { type TipoReporte } from "../types/reporte.types";
 
 interface ReporteFiltersProps {
@@ -24,6 +25,7 @@ export function ReporteFilters({ tipoActivo, onSubmit }: ReporteFiltersProps) {
 
   const { data: productosData } = useFetchProductos(1, 200);
   const { data: bancos } = useFetchBancos();
+  const { data: entregasData } = useFetchEntregas({}, 1, 200);
 
   function buildFiltros(): Record<string, unknown> {
     const base: Record<string, unknown> = {};
@@ -55,7 +57,10 @@ export function ReporteFilters({ tipoActivo, onSubmit }: ReporteFiltersProps) {
   const productoRequerido = tipoActivo === "kardex" && !productoId;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4 rounded-lg border border-border bg-muted/20 p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-wrap items-end gap-4 rounded-lg border border-border bg-muted/20 p-4"
+    >
       {/* Fecha desde/hasta — todos los tipos */}
       <div className="flex flex-col gap-1">
         <Label htmlFor="fecha_desde">Fecha desde</Label>
@@ -123,7 +128,9 @@ export function ReporteFilters({ tipoActivo, onSubmit }: ReporteFiltersProps) {
             <select
               id="estado"
               value={estado}
-              onChange={(e) => setEstado(e.target.value as "" | "activa" | "eliminada")}
+              onChange={(e) =>
+                setEstado(e.target.value as "" | "activa" | "eliminada")
+              }
               className="h-9 w-36 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:bg-background"
             >
               <option value="">Todos</option>
@@ -154,14 +161,20 @@ export function ReporteFilters({ tipoActivo, onSubmit }: ReporteFiltersProps) {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <Label htmlFor="entrega_id">ID Entrega</Label>
-            <Input
+            <Label htmlFor="entrega_id">Entrega</Label>
+            <select
               id="entrega_id"
               value={entregaId}
               onChange={(e) => setEntregaId(e.target.value)}
-              placeholder="UUID de entrega"
-              className="w-48"
-            />
+              className="h-9 w-48 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring dark:bg-background"
+            >
+              <option value="">Todas</option>
+              {entregasData?.items.map((e) => (
+                <option key={e.id} value={e.id}>
+                  Entrega #{e.numero}
+                </option>
+              ))}
+            </select>
           </div>
         </>
       )}

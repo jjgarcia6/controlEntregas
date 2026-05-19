@@ -120,6 +120,8 @@ export const reportePagoRowSchema = z.object({
   tipo_cuenta: z.string(),
   nombre_titular: z.string(),
   valor_total: z.coerce.number(),
+  valor_aplicado: z.coerce.number(),
+  estado: z.string(),
   distribuciones: z.array(reportePagoDistribucionRowSchema),
 });
 
@@ -135,9 +137,15 @@ export type FiltrosKardexType = z.infer<typeof filtrosKardexSchema>;
 export type FiltrosEntregasType = z.infer<typeof filtrosEntregasSchema>;
 export type FiltrosPagosType = z.infer<typeof filtrosPagosSchema>;
 export type ReporteXmlsResponseType = z.infer<typeof reporteXmlsResponseSchema>;
-export type ReporteKardexResponseType = z.infer<typeof reporteKardexResponseSchema>;
-export type ReporteEntregasResponseType = z.infer<typeof reporteEntregasResponseSchema>;
-export type ReportePagosResponseType = z.infer<typeof reportePagosResponseSchema>;
+export type ReporteKardexResponseType = z.infer<
+  typeof reporteKardexResponseSchema
+>;
+export type ReporteEntregasResponseType = z.infer<
+  typeof reporteEntregasResponseSchema
+>;
+export type ReportePagosResponseType = z.infer<
+  typeof reportePagosResponseSchema
+>;
 
 // --- Tipo utilitario ---
 export type TipoReporte = "xmls" | "kardex" | "entregas" | "pagos";

@@ -33,7 +33,12 @@ interface PagoFormProps {
   formState: FormState<PagoRequestType>;
 }
 
-export function PagoForm({ register, control, setValue, formState }: PagoFormProps) {
+export function PagoForm({
+  register,
+  control,
+  setValue,
+  formState,
+}: PagoFormProps) {
   const { data: bancos = [] } = useFetchBancos();
 
   const bancoId = useWatch({ control, name: "banco_id" });
@@ -60,12 +65,15 @@ export function PagoForm({ register, control, setValue, formState }: PagoFormPro
         <Label htmlFor="fecha_pago">Fecha de Pago</Label>
         <Input
           id="fecha_pago"
-          type="date"
+          type="datetime-local"
+          step="1"
           {...register("fecha_pago")}
           aria-invalid={!!formState.errors.fecha_pago}
         />
         {formState.errors.fecha_pago && (
-          <p className="text-xs text-destructive">{formState.errors.fecha_pago.message}</p>
+          <p className="text-xs text-destructive">
+            {formState.errors.fecha_pago.message}
+          </p>
         )}
       </div>
 
@@ -73,9 +81,14 @@ export function PagoForm({ register, control, setValue, formState }: PagoFormPro
         <Label htmlFor="banco_id">Banco</Label>
         <Select
           value={bancoId}
-          onValueChange={(v) => setValue("banco_id", v, { shouldValidate: true })}
+          onValueChange={(v) =>
+            setValue("banco_id", v, { shouldValidate: true })
+          }
         >
-          <SelectTrigger id="banco_id" aria-invalid={!!formState.errors.banco_id}>
+          <SelectTrigger
+            id="banco_id"
+            aria-invalid={!!formState.errors.banco_id}
+          >
             <SelectValue placeholder="Seleccione un banco" />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +100,9 @@ export function PagoForm({ register, control, setValue, formState }: PagoFormPro
           </SelectContent>
         </Select>
         {formState.errors.banco_id && (
-          <p className="text-xs text-destructive">{formState.errors.banco_id.message}</p>
+          <p className="text-xs text-destructive">
+            {formState.errors.banco_id.message}
+          </p>
         )}
       </div>
 
@@ -123,7 +138,9 @@ export function PagoForm({ register, control, setValue, formState }: PagoFormPro
           aria-invalid={!!formState.errors.nombre_titular}
         />
         {formState.errors.nombre_titular && (
-          <p className="text-xs text-destructive">{formState.errors.nombre_titular.message}</p>
+          <p className="text-xs text-destructive">
+            {formState.errors.nombre_titular.message}
+          </p>
         )}
       </div>
 
@@ -139,7 +156,9 @@ export function PagoForm({ register, control, setValue, formState }: PagoFormPro
           aria-invalid={!!formState.errors.valor_total}
         />
         {formState.errors.valor_total && (
-          <p className="text-xs text-destructive">{formState.errors.valor_total.message}</p>
+          <p className="text-xs text-destructive">
+            {formState.errors.valor_total.message}
+          </p>
         )}
       </div>
     </div>

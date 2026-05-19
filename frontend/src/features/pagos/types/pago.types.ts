@@ -12,13 +12,16 @@ export const pagoRequestSchema = z.object({
     .string()
     .min(1, { message: "El número de comprobante es requerido" })
     .max(100),
-  fecha_pago: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Formato de fecha inválido (YYYY-MM-DD)" }),
-  banco_id: z.string().uuid({ message: "Seleccione un banco válido" }),
-  tipo_cuenta: z.enum(["corriente", "ahorros", "transferencia", "cheque", "efectivo"], {
-    errorMap: () => ({ message: "Seleccione un tipo de cuenta válido" }),
+  fecha_pago: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, {
+    message: "Formato de fecha inválido (YYYY-MM-DDTHH:MM)",
   }),
+  banco_id: z.string().uuid({ message: "Seleccione un banco válido" }),
+  tipo_cuenta: z.enum(
+    ["corriente", "ahorros", "transferencia", "cheque", "efectivo"],
+    {
+      errorMap: () => ({ message: "Seleccione un tipo de cuenta válido" }),
+    },
+  ),
   nombre_titular: z
     .string()
     .min(1, { message: "El nombre del titular es requerido" })
@@ -44,7 +47,13 @@ export const pagoResponseSchema = z.object({
   fecha_pago: z.string(),
   banco_id: z.string().uuid(),
   banco_nombre: z.string(),
-  tipo_cuenta: z.enum(["corriente", "ahorros", "transferencia", "cheque", "efectivo"]),
+  tipo_cuenta: z.enum([
+    "corriente",
+    "ahorros",
+    "transferencia",
+    "cheque",
+    "efectivo",
+  ]),
   nombre_titular: z.string(),
   valor_total: z.coerce.number(),
   valor_aplicado: z.coerce.number(),
@@ -69,4 +78,6 @@ export type PagoRequestType = z.infer<typeof pagoRequestSchema>;
 export type PagoItemResponseType = z.infer<typeof pagoItemResponseSchema>;
 export type PagoResponseType = z.infer<typeof pagoResponseSchema>;
 export type PagoDetailResponseType = z.infer<typeof pagoDetailResponseSchema>;
-export type EntregaPendienteType = z.infer<typeof entregaPendienteResponseSchema>;
+export type EntregaPendienteType = z.infer<
+  typeof entregaPendienteResponseSchema
+>;

@@ -12,23 +12,25 @@
       <th>Tipo Cuenta</th>
       <th>Titular</th>
       <th>Valor Total</th>
+      <th>Estado</th>
     </tr>
   </thead>
   <tbody>
     {% for fila in reporte.filas %}
     <tr>
       <td>{{ fila.numero_comprobante }}</td>
-      <td>{{ fila.fecha_pago }}</td>
+      <td>{{ fila.fecha_pago.strftime("%d-%m-%Y %H:%M:%S") }}</td>
       <td>{{ fila.banco_nombre }}</td>
       <td>{{ fila.tipo_cuenta }}</td>
       <td>{{ fila.nombre_titular }}</td>
       <td style="text-align:right">${{ "%.2f"|format(fila.valor_total) }}</td>
+      <td class="tag-{{ fila.estado }}">{{ fila.estado }}</td>
     </tr>
     {% for dist in fila.distribuciones %}
     <tr class="sub-row">
-      <td colspan="3">↳ Entrega #{{ dist.entrega_numero }} — {{ dist.snap_nombre }}</td>
-      <td colspan="2"></td>
+      <td colspan="5">↳ Entrega #{{ dist.entrega_numero }} — {{ dist.snap_nombre }}</td>
       <td style="text-align:right">${{ "%.2f"|format(dist.monto_aplicado) }}</td>
+      <td></td>
     </tr>
     {% endfor %}
     {% endfor %}

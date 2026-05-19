@@ -1,10 +1,10 @@
 import enum
 import uuid
-from datetime import date
+from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date
+from sqlalchemy import DateTime
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy import ForeignKey, Index, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
@@ -41,8 +41,9 @@ class Pago(AuditMixin, Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    numero_comprobante: Mapped[str] = mapped_column(String(100), nullable=False)
-    fecha_pago: Mapped[date] = mapped_column(Date, nullable=False)
+    numero_comprobante: Mapped[str] = mapped_column(
+        String(100), nullable=False)
+    fecha_pago: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     banco_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("bancos.id"), nullable=False
     )
@@ -50,7 +51,8 @@ class Pago(AuditMixin, Base):
         SAEnum(TipoCuenta, name="tipo_cuenta"), nullable=False
     )
     nombre_titular: Mapped[str] = mapped_column(String(255), nullable=False)
-    valor_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    valor_total: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False)
     valor_aplicado: Mapped[Decimal] = mapped_column(
         Numeric(12, 2), nullable=False, default=Decimal("0")
     )
@@ -69,7 +71,8 @@ class Pago(AuditMixin, Base):
 class PagoEntrega(AuditMixin, Base):
     __tablename__ = "pago_entregas"
     __table_args__ = (
-        UniqueConstraint("pago_id", "entrega_id", name="uq_pago_entregas_pago_entrega"),
+        UniqueConstraint("pago_id", "entrega_id",
+                         name="uq_pago_entregas_pago_entrega"),
         Index("ix_pago_entregas_pago_id", "pago_id"),
         Index("ix_pago_entregas_entrega_id", "entrega_id"),
     )
@@ -83,7 +86,8 @@ class PagoEntrega(AuditMixin, Base):
     entrega_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("entregas.id"), nullable=False
     )
-    monto_aplicado: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    monto_aplicado: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False)
 
     pago: Mapped["Pago"] = relationship("Pago", back_populates="pago_entregas")
     entrega: Mapped["Entrega"] = relationship("Entrega", lazy="selectin")

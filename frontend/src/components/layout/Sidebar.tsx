@@ -51,10 +51,22 @@ const navItems: NavItem[] = [
     roles: ["admin", "operador"],
   },
   {
-    label: "XML Pendientes",
+    label: "Ingreso XML",
+    icon: FileUp,
+    href: "/xml/ingreso",
+    roles: ["admin", "operador"],
+  },
+  {
+    label: "Pendientes XML",
     icon: ClipboardList,
     href: "/xml/pendientes",
     roles: ["admin", "operador"],
+  },
+  {
+    label: "Lista XML",
+    icon: FileText,
+    href: "/xml/lista",
+    roles: ["admin", "operador", "lectura"],
   },
   {
     label: "Kardex",
@@ -75,15 +87,9 @@ const navItems: NavItem[] = [
     roles: ["admin", "operador"],
   },
   {
-    label: "Ingreso XML",
-    icon: FileUp,
-    href: "/xml/ingreso",
-    roles: ["admin", "operador"],
-  },
-  {
-    label: "Lista XML",
-    icon: FileText,
-    href: "/xml/lista",
+    label: "Reportes",
+    icon: FileBarChart,
+    href: "/reportes",
     roles: ["admin", "operador", "lectura"],
   },
   {
@@ -98,12 +104,6 @@ const navItems: NavItem[] = [
     href: "/auditoria",
     roles: ["admin"],
   },
-  {
-    label: "Reportes",
-    icon: FileBarChart,
-    href: "/reportes",
-    roles: ["admin", "operador", "lectura"],
-  },
 ];
 
 interface AppSidebarProps {
@@ -114,7 +114,7 @@ export function AppSidebar({ rol = "" }: AppSidebarProps) {
   const location = useLocation();
 
   const visibleItems = navItems.filter(
-    (item) => rol === "" || item.roles.includes(rol)
+    (item) => rol === "" || item.roles.includes(rol),
   );
 
   return (

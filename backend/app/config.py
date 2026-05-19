@@ -37,6 +37,13 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> List[str]:
         return _parse_cors(self.CORS_ORIGINS)
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def clean_database_url(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def coerce_to_str(cls, v: Any) -> Any:

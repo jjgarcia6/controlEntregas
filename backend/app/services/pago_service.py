@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any
 
@@ -49,7 +49,8 @@ async def crear_pago(
     for item in datos.distribuciones:
         entrega = entregas.get(item.entrega_id)
         if entrega is None:
-            raise EntidadNoEncontrada(f"Entrega {item.entrega_id} no encontrada")
+            raise EntidadNoEncontrada(
+                f"Entrega {item.entrega_id} no encontrada")
         if not entrega.is_active or entrega.estado == EstadoEntrega.eliminada:
             raise ValidacionNegocio(
                 f"No se puede aplicar un pago a una entrega eliminada (id={item.entrega_id})"
@@ -144,9 +145,11 @@ async def listar_pagos(
     filters: list[ColumnElement[bool]] = [Pago.is_active.is_(True)]
 
     if fecha_desde is not None:
-        filters.append(Pago.fecha_pago >= fecha_desde)
+        filters.append(Pago.fecha_pago >=
+                       datetime.combine(fecha_desde, time.min))
     if fecha_hasta is not None:
-        filters.append(Pago.fecha_pago <= fecha_hasta)
+        filters.append(Pago.fecha_pago <=
+                       datetime.combine(fecha_hasta, time.max))
     if banco_id is not None:
         filters.append(Pago.banco_id == banco_id)
     if entrega_id is not None:

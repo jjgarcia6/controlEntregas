@@ -5,7 +5,11 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useCreatePago } from "../hooks/useCreatePago";
-import { pagoRequestSchema, type PagoItemRequestType, type PagoRequestType } from "../types/pago.types";
+import {
+  pagoRequestSchema,
+  type PagoItemRequestType,
+  type PagoRequestType,
+} from "../types/pago.types";
 import { EntregaDistribucion } from "./EntregaDistribucion";
 import { PagoForm } from "./PagoForm";
 
@@ -13,13 +17,21 @@ export function PagoCreateContainer() {
   const navigate = useNavigate();
   const { mutate, isPending, errorMessage } = useCreatePago();
 
-  const [distribuciones, setDistribuciones] = useState<PagoItemRequestType[]>([]);
+  const [distribuciones, setDistribuciones] = useState<PagoItemRequestType[]>(
+    [],
+  );
+  const now = new Date();
+  const defaultFechaPago = new Date(
+    now.getTime() - now.getTimezoneOffset() * 60000,
+  )
+    .toISOString()
+    .slice(0, 16);
 
   const form = useForm<PagoRequestType>({
     resolver: zodResolver(pagoRequestSchema),
     defaultValues: {
       numero_comprobante: "",
-      fecha_pago: new Date().toISOString().split("T")[0],
+      fecha_pago: defaultFechaPago,
       banco_id: "",
       tipo_cuenta: "transferencia",
       nombre_titular: "",
@@ -30,15 +42,22 @@ export function PagoCreateContainer() {
 
   const valorTotal = useWatch({ control: form.control, name: "valor_total" });
 
-  const sumaAplicada = distribuciones.reduce((acc, d) => acc + (d.monto_aplicado || 0), 0);
+  const sumaAplicada = distribuciones.reduce(
+    (acc, d) => acc + (d.monto_aplicado || 0),
+    0,
+  );
   const valorTotalNum = Number(valorTotal) || 0;
   const diferencia = Math.round((valorTotalNum - sumaAplicada) * 100) / 100;
-  const cuadra = diferencia === 0 && distribuciones.length > 0 && valorTotalNum > 0;
+  const cuadra =
+    diferencia === 0 && distribuciones.length > 0 && valorTotalNum > 0;
 
-  const handleDistribucionChange = useCallback((items: PagoItemRequestType[]) => {
-    setDistribuciones(items);
-    form.setValue("distribuciones", items, { shouldValidate: true });
-  }, [form]);
+  const handleDistribucionChange = useCallback(
+    (items: PagoItemRequestType[]) => {
+      setDistribuciones(items);
+      form.setValue("distribuciones", items, { shouldValidate: true });
+    },
+    [form],
+  );
 
   function handleSubmit() {
     form.handleSubmit((formData) => {
@@ -55,7 +74,9 @@ export function PagoCreateContainer() {
       <h2 className="text-xl font-semibold">Nuevo Pago</h2>
 
       <section className="space-y-4">
-        <h3 className="font-medium text-base border-b pb-1">Datos del comprobante</h3>
+        <h3 className="font-medium text-base border-b pb-1">
+          Datos del comprobante
+        </h3>
         <PagoForm
           register={form.register}
           control={form.control}
@@ -65,7 +86,9 @@ export function PagoCreateContainer() {
       </section>
 
       <section className="space-y-4">
-        <h3 className="font-medium text-base border-b pb-1">Distribución entre entregas</h3>
+        <h3 className="font-medium text-base border-b pb-1">
+          Distribución entre entregas
+        </h3>
         <EntregaDistribucion
           distribuciones={distribuciones}
           valorTotal={valorTotalNum}

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, time
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -398,20 +398,20 @@ async def reporte_entregas(
         return _to_pdf("entregas.html", ctx)
 
     headers = [
-        "#",
         "Fecha",
-        "Destinatario",
+        "#",
         "Identificación",
+        "Destinatario",
         "Total Entrega",
         "Saldo Pendiente",
         "Estado",
     ]
     rows: list[list[object]] = [
         [
-            f.numero,
             str(f.fecha_creacion),
-            f.snap_nombre,
+            f.numero,
             f.snap_identificacion,
+            f.snap_nombre,
             f.total_entrega,
             f.saldo_pendiente,
             f.estado,
@@ -435,9 +435,13 @@ async def reporte_pagos(
     )
 
     if filtros.fecha_desde is not None:
-        stmt = stmt.where(Pago.fecha_pago >= filtros.fecha_desde)
+        stmt = stmt.where(
+            Pago.fecha_pago >= datetime.combine(filtros.fecha_desde, time.min)
+        )
     if filtros.fecha_hasta is not None:
-        stmt = stmt.where(Pago.fecha_pago <= filtros.fecha_hasta)
+        stmt = stmt.where(
+            Pago.fecha_pago <= datetime.combine(filtros.fecha_hasta, time.max)
+        )
     if filtros.banco_id is not None:
         stmt = stmt.where(Pago.banco_id == filtros.banco_id)
     if filtros.entrega_id is not None:
@@ -458,6 +462,8 @@ async def reporte_pagos(
             tipo_cuenta=p.tipo_cuenta.value,
             nombre_titular=p.nombre_titular,
             valor_total=p.valor_total,
+            valor_aplicado=p.valor_aplicado,
+            estado=p.estado.value,
             distribuciones=[
                 ReportePagoDistribucionRow(
                     entrega_numero=pe.entrega.numero,
@@ -490,21 +496,25 @@ async def reporte_pagos(
         return _to_pdf("pagos.html", ctx)
 
     headers = [
+        "Tipo Cuenta",
         "Comprobante",
         "Fecha Pago",
         "Banco",
-        "Tipo Cuenta",
         "Titular",
         "Valor Total",
+        "Aplicado",
+        "Estado",
     ]
     rows: list[list[object]] = [
         [
-            f.numero_comprobante,
-            str(f.fecha_pago),
-            f.banco_nombre,
             f.tipo_cuenta,
+            f.numero_comprobante,
+            f.fecha_pago.strftime("%d-%m-%Y %H:%M:%S"),
+            f.banco_nombre,
             f.nombre_titular,
             f.valor_total,
+            f.valor_aplicado,
+            f.estado,
         ]
         for f in filas
     ]

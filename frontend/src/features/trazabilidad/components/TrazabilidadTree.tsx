@@ -1,5 +1,7 @@
 import { FileText, Package, CreditCard, AlertTriangle } from "lucide-react";
 
+import { formatDate } from "@/shared/utils/formatters";
+
 import {
   type TrazabilidadXmlResponseType,
   type TrazabilidadEntregaResponseType,
@@ -45,8 +47,9 @@ function XmlOrigenList({ xmls }: { xmls: XmlOrigenTrazaType[] }) {
           <span className="font-medium">{origen.xml.numero_factura}</span>
           {!origen.xml.is_active && <EliminadoBadge />}
           <span className="ml-2 text-muted-foreground">
-            — {origen.xml_item.descripcion} | Cant: {Number(origen.cantidad_consumida).toFixed(4)} |
-            Costo U: ${Number(origen.costo_unitario).toFixed(4)}
+            — {origen.xml_item.descripcion} | Cant:{" "}
+            {Number(origen.cantidad_consumida).toFixed(4)} | Costo U: $
+            {Number(origen.costo_unitario).toFixed(4)}
           </span>
         </li>
       ))}
@@ -64,26 +67,38 @@ function TreeXml({ data }: { data: TrazabilidadXmlResponseType }) {
           {!data.xml.is_active && <EliminadoBadge />}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          {data.xml.razon_social_emisor} · {data.xml.ruc_emisor} · {data.xml.fecha_emision}
+          {data.xml.razon_social_emisor} · {data.xml.ruc_emisor} ·{" "}
+          {data.xml.fecha_emision}
         </p>
       </div>
 
       <div>
-        <SectionTitle icon={<Package className="h-4 w-4" />} text="Ingresos al Kardex" />
+        <SectionTitle
+          icon={<Package className="h-4 w-4" />}
+          text="Ingresos al Kardex"
+        />
         {data.ingresos_kardex.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin ingresos al Kardex.</p>
+          <p className="text-sm text-muted-foreground">
+            Sin ingresos al Kardex.
+          </p>
         ) : (
           <ul className="space-y-2">
             {data.ingresos_kardex.map((ing, i) => (
-              <li key={i} className="rounded border border-border bg-background p-3 text-sm">
+              <li
+                key={i}
+                className="rounded border border-border bg-background p-3 text-sm"
+              >
                 <div className="font-medium">
                   {ing.xml_item.descripcion} ({ing.xml_item.codigo_principal})
                 </div>
                 <div className="mt-1 text-muted-foreground">
                   Producto: {ing.producto.descripcion} | Cant ingresada:{" "}
-                  {Number(ing.xml_item.cantidad_ingresada).toFixed(4)} | Costo U: $
-                  {Number(ing.kardex_movimiento.costo_unitario).toFixed(4)} | Fecha:{" "}
-                  {new Date(ing.kardex_movimiento.fecha_movimiento).toLocaleDateString()}
+                  {Number(ing.xml_item.cantidad_ingresada).toFixed(4)} | Costo
+                  U: ${Number(ing.kardex_movimiento.costo_unitario).toFixed(4)}{" "}
+                  | Fecha:{" "}
+                  {new Date(
+                    ing.kardex_movimiento.fecha_movimiento,
+                  ).toLocaleDateString()}
                 </div>
               </li>
             ))}
@@ -94,18 +109,23 @@ function TreeXml({ data }: { data: TrazabilidadXmlResponseType }) {
       <div>
         <SectionTitle icon={<Package className="h-4 w-4" />} text="Entregas" />
         {data.entregas.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin entregas asociadas.</p>
+          <p className="text-sm text-muted-foreground">
+            Sin entregas asociadas.
+          </p>
         ) : (
           <ul className="space-y-2">
             {data.entregas.map((ec, i) => (
-              <li key={i} className="rounded border border-border bg-background p-3 text-sm">
+              <li
+                key={i}
+                className="rounded border border-border bg-background p-3 text-sm"
+              >
                 <div className="flex items-center font-medium">
                   Entrega #{ec.entrega.numero} — {ec.entrega.snap_nombre}
                   {ec.entrega.estado === "eliminada" && <EliminadoBadge />}
                 </div>
                 <div className="mt-1 text-muted-foreground">
-                  Cant consumida: {Number(ec.cantidad_consumida).toFixed(4)} | Costo: $
-                  {Number(ec.costo_total_consumido).toFixed(2)}
+                  Cant consumida: {Number(ec.cantidad_consumida).toFixed(4)} |
+                  Costo: ${Number(ec.costo_total_consumido).toFixed(2)}
                 </div>
               </li>
             ))}
@@ -120,13 +140,17 @@ function TreeXml({ data }: { data: TrazabilidadXmlResponseType }) {
         ) : (
           <ul className="space-y-2">
             {data.pagos.map((p, i) => (
-              <li key={i} className="rounded border border-border bg-background p-3 text-sm">
+              <li
+                key={i}
+                className="rounded border border-border bg-background p-3 text-sm"
+              >
                 <div className="flex items-center font-medium">
                   {p.numero_comprobante} — {p.banco_nombre}
                   {p.estado === "eliminado" && <EliminadoBadge />}
                 </div>
                 <div className="mt-1 text-muted-foreground">
-                  Total: ${Number(p.valor_total).toFixed(2)} | Fecha: {p.fecha_pago}
+                  Total: ${Number(p.valor_total).toFixed(2)} | Fecha:{" "}
+                  {formatDate(p.fecha_pago, "dd-MM-yyyy HH:mm:ss")}
                 </div>
               </li>
             ))}
@@ -153,19 +177,26 @@ function TreeEntrega({ data }: { data: TrazabilidadEntregaResponseType }) {
       </div>
 
       <div>
-        <SectionTitle icon={<FileText className="h-4 w-4" />} text="XMLs de Origen" />
+        <SectionTitle
+          icon={<FileText className="h-4 w-4" />}
+          text="XMLs de Origen"
+        />
         {data.xmls_origen.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sin XMLs de origen.</p>
         ) : (
           <ul className="space-y-2">
             {data.xmls_origen.map((origen, i) => (
-              <li key={i} className="rounded border border-border bg-background p-3 text-sm">
+              <li
+                key={i}
+                className="rounded border border-border bg-background p-3 text-sm"
+              >
                 <div className="flex items-center font-medium">
                   {origen.xml.numero_factura} — {origen.xml.razon_social_emisor}
                   {!origen.xml.is_active && <EliminadoBadge />}
                 </div>
                 <div className="mt-1 text-muted-foreground">
-                  {origen.xml_item.descripcion} ({origen.xml_item.codigo_principal}) | Cant:{" "}
+                  {origen.xml_item.descripcion} (
+                  {origen.xml_item.codigo_principal}) | Cant:{" "}
                   {Number(origen.cantidad_consumida).toFixed(4)} | Costo U: $
                   {Number(origen.costo_unitario).toFixed(4)}
                 </div>
@@ -176,19 +207,26 @@ function TreeEntrega({ data }: { data: TrazabilidadEntregaResponseType }) {
       </div>
 
       <div>
-        <SectionTitle icon={<CreditCard className="h-4 w-4" />} text="Pagos Aplicados" />
+        <SectionTitle
+          icon={<CreditCard className="h-4 w-4" />}
+          text="Pagos Aplicados"
+        />
         {data.pagos.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sin pagos aplicados.</p>
         ) : (
           <ul className="space-y-2">
             {data.pagos.map((p, i) => (
-              <li key={i} className="rounded border border-border bg-background p-3 text-sm">
+              <li
+                key={i}
+                className="rounded border border-border bg-background p-3 text-sm"
+              >
                 <div className="flex items-center font-medium">
                   {p.numero_comprobante} — {p.banco_nombre}
                   {p.estado === "eliminado" && <EliminadoBadge />}
                 </div>
                 <div className="mt-1 text-muted-foreground">
-                  Monto aplicado: ${Number(p.monto_aplicado).toFixed(2)} | Fecha: {p.fecha_pago}
+                  Monto aplicado: ${Number(p.monto_aplicado).toFixed(2)} |
+                  Fecha: {formatDate(p.fecha_pago, "dd-MM-yyyy HH:mm:ss")}
                 </div>
               </li>
             ))}
@@ -209,18 +247,27 @@ function TreePago({ data }: { data: TrazabilidadPagoResponseType }) {
           {data.pago.estado === "eliminado" && <EliminadoBadge />}
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Total: ${Number(data.pago.valor_total).toFixed(2)} | Fecha: {data.pago.fecha_pago}
+          Total: ${Number(data.pago.valor_total).toFixed(2)} | Fecha:{" "}
+          {formatDate(data.pago.fecha_pago, "dd-MM-yyyy HH:mm:ss")}
         </p>
       </div>
 
       <div>
-        <SectionTitle icon={<Package className="h-4 w-4" />} text="Entregas en Distribución" />
+        <SectionTitle
+          icon={<Package className="h-4 w-4" />}
+          text="Entregas en Distribución"
+        />
         {data.distribuciones.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin entregas en distribución.</p>
+          <p className="text-sm text-muted-foreground">
+            Sin entregas en distribución.
+          </p>
         ) : (
           <ul className="space-y-3">
             {data.distribuciones.map((dist, i) => (
-              <li key={i} className="rounded border border-border bg-background p-3 text-sm">
+              <li
+                key={i}
+                className="rounded border border-border bg-background p-3 text-sm"
+              >
                 <div className="flex items-center font-medium">
                   Entrega #{dist.entrega.numero} — {dist.entrega.snap_nombre}
                   {dist.entrega.estado === "eliminada" && <EliminadoBadge />}
@@ -239,7 +286,9 @@ function TreePago({ data }: { data: TrazabilidadPagoResponseType }) {
 }
 
 export function TrazabilidadTree({ tipo, data }: Props) {
-  if (tipo === "xml") return <TreeXml data={data as TrazabilidadXmlResponseType} />;
-  if (tipo === "entrega") return <TreeEntrega data={data as TrazabilidadEntregaResponseType} />;
+  if (tipo === "xml")
+    return <TreeXml data={data as TrazabilidadXmlResponseType} />;
+  if (tipo === "entrega")
+    return <TreeEntrega data={data as TrazabilidadEntregaResponseType} />;
   return <TreePago data={data as TrazabilidadPagoResponseType} />;
 }

@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency } from "@/shared/utils/formatters";
+import { formatCurrency, formatDate } from "@/shared/utils/formatters";
 import type { PagoResponseType } from "../types/pago.types";
 
 interface PagosListProps {
@@ -37,6 +37,7 @@ export function PagosList({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>Tipo de Cuenta</TableHead>
           <TableHead>Comprobante</TableHead>
           <TableHead>Fecha</TableHead>
           <TableHead>Banco</TableHead>
@@ -52,7 +53,7 @@ export function PagosList({
         {isLoading
           ? Array.from({ length: SKELETON_ROWS }).map((_, i) => (
               <TableRow key={i}>
-                {Array.from({ length: canDelete ? 8 : 7 }).map((__, j) => (
+                {Array.from({ length: canDelete ? 9 : 8 }).map((__, j) => (
                   <TableCell key={j}>
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
@@ -65,18 +66,31 @@ export function PagosList({
                 onClick={() => onVerDetalle(p.id)}
                 className="cursor-pointer hover:bg-muted/50"
               >
+                <TableCell className="text-sm capitalize">
+                  {p.tipo_cuenta}
+                </TableCell>
                 <TableCell className="font-mono text-sm font-medium">
                   {p.numero_comprobante}
                 </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{p.fecha_pago}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {formatDate(p.fecha_pago, "dd-MM-yyyy HH:mm:ss")}
+                </TableCell>
                 <TableCell>{p.banco_nombre}</TableCell>
                 <TableCell>{p.nombre_titular}</TableCell>
-                <TableCell className="text-right">{formatCurrency(p.valor_total)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(p.valor_aplicado)}</TableCell>
+                <TableCell className="text-right">
+                  {formatCurrency(p.valor_total)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {formatCurrency(p.valor_aplicado)}
+                </TableCell>
                 <TableCell>
                   <Badge
                     variant={p.estado === "activo" ? "default" : "destructive"}
-                    className={p.estado === "activo" ? "bg-green-700 dark:bg-green-700" : ""}
+                    className={
+                      p.estado === "activo"
+                        ? "bg-green-700 dark:bg-green-700"
+                        : ""
+                    }
                   >
                     {p.estado}
                   </Badge>
@@ -113,7 +127,7 @@ export function PagosList({
         {!isLoading && pagos.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={7 + (onVerTrazabilidad ? 1 : 0) + (canDelete ? 1 : 0)}
+              colSpan={8 + (onVerTrazabilidad ? 1 : 0) + (canDelete ? 1 : 0)}
               className="text-center text-muted-foreground py-8"
             >
               Sin pagos registrados
