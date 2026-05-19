@@ -7,6 +7,7 @@ from app.routers import (
     audit,
     auth,
     bancos,
+    dashboard,
     destinatarios,
     entregas,
     kardex,
@@ -96,6 +97,7 @@ async def validacion_distribucion_handler(
 
 
 app.include_router(auth.router)
+app.include_router(dashboard.router)
 app.include_router(usuarios.router)
 app.include_router(bancos.router)
 app.include_router(destinatarios.router)

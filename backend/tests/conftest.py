@@ -19,7 +19,7 @@ from app.models.base import Base  # noqa: E402
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+asyncpg://postgres:postgres@localhost:5432/control_entregas_test",
-)
+).strip()
 
 # NullPool + statement_cache_size=0: required for Supabase/PgBouncer transaction mode.
 # NullPool prevents SQLAlchemy from holding connections across transactions.
@@ -46,7 +46,7 @@ async def setup_database():
             text("""
                 INSERT INTO usuarios (id, email, password_hash, nombre, rol, is_active)
                 VALUES (:id, :email, :password_hash, :nombre, :rol, true)
-                ON CONFLICT (email) DO NOTHING
+                ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash
                 """),
             {
                 "id": uuid.uuid4(),
