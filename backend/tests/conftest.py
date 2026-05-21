@@ -21,7 +21,10 @@ from app.utils.rate_limit import email_failure_tracker, ip_login_limiter  # noqa
 
 DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/control_entregas_test"),
+    os.getenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/control_entregas_test",
+    ),
 ).strip()
 
 # NullPool + statement_cache_size=0: required for Supabase/PgBouncer transaction mode.

@@ -80,6 +80,7 @@ async def test_ip_rate_limit(test_client: AsyncClient) -> None:
     for _ in range(10):
         ip_login_limiter.check_and_record(test_ip)
     from app.utils.exceptions import LimiteSolicitudes
+
     with pytest.raises(LimiteSolicitudes):
         ip_login_limiter.check_and_record(test_ip)
     ip_login_limiter.reset(test_ip)

@@ -49,8 +49,7 @@ async def crear_pago(
     for item in datos.distribuciones:
         entrega = entregas.get(item.entrega_id)
         if entrega is None:
-            raise EntidadNoEncontrada(
-                f"Entrega {item.entrega_id} no encontrada")
+            raise EntidadNoEncontrada(f"Entrega {item.entrega_id} no encontrada")
         if not entrega.is_active or entrega.estado == EstadoEntrega.eliminada:
             raise ValidacionNegocio(
                 f"No se puede aplicar un pago a una entrega eliminada (id={item.entrega_id})"
@@ -162,14 +161,14 @@ async def listar_pagos(
     entrega_id: uuid.UUID | None = None,
     incluir_eliminados: bool = False,
 ) -> PaginatedResponse[PagoResponse]:
-    filters: list[ColumnElement[bool]] = [] if incluir_eliminados else [Pago.is_active.is_(True)]
+    filters: list[ColumnElement[bool]] = (
+        [] if incluir_eliminados else [Pago.is_active.is_(True)]
+    )
 
     if fecha_desde is not None:
-        filters.append(Pago.fecha_pago >=
-                       datetime.combine(fecha_desde, time.min))
+        filters.append(Pago.fecha_pago >= datetime.combine(fecha_desde, time.min))
     if fecha_hasta is not None:
-        filters.append(Pago.fecha_pago <=
-                       datetime.combine(fecha_hasta, time.max))
+        filters.append(Pago.fecha_pago <= datetime.combine(fecha_hasta, time.max))
     if banco_id is not None:
         filters.append(Pago.banco_id == banco_id)
     if entrega_id is not None:

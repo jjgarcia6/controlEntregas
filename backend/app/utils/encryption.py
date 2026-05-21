@@ -61,6 +61,7 @@ def hmac_hash(value: str) -> str:
 
 # --- audit-log masking helpers ---
 
+
 def mask_identificacion(v: str) -> str:
     return ("*" * max(0, len(v) - 4) + v[-4:]) if len(v) > 4 else "***"
 

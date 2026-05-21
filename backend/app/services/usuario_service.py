@@ -38,7 +38,9 @@ async def crear(
     if existing.scalar_one_or_none() is not None:
         raise ConflictoUnicidad(f"Ya existe un usuario con email '{email_str}'")
 
-    password_hash = bcrypt.hashpw(datos.password.encode(), bcrypt.gensalt(rounds=12)).decode()
+    password_hash = bcrypt.hashpw(
+        datos.password.encode(), bcrypt.gensalt(rounds=12)
+    ).decode()
     nuevo = Usuario(
         email=email_str,
         password_hash=password_hash,
@@ -95,7 +97,9 @@ async def actualizar(
     await session.flush()
     set_audit_payload(
         payload_antes=antes,
-        payload_despues=safe_dict(email=usuario.email, nombre=usuario.nombre, rol=usuario.rol),
+        payload_despues=safe_dict(
+            email=usuario.email, nombre=usuario.nombre, rol=usuario.rol
+        ),
     )
     return UsuarioResponse.model_validate(usuario)
 
@@ -152,7 +156,9 @@ async def desactivar(
         raise EntidadNoEncontrada("Usuario no encontrado")
 
     set_audit_payload(
-        payload_antes=safe_dict(email=usuario.email, nombre=usuario.nombre, rol=usuario.rol)
+        payload_antes=safe_dict(
+            email=usuario.email, nombre=usuario.nombre, rol=usuario.rol
+        )
     )
     usuario.soft_delete(usuario_id)
     await session.flush()

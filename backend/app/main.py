@@ -1,3 +1,6 @@
+import logging
+from typing import Any
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -30,7 +33,18 @@ from app.utils.exceptions import (
     ValidacionNegocio,
 )
 
-app = FastAPI(title="Control de Entregas", version="0.1.0")
+logging.basicConfig(
+    level=logging.DEBUG if settings.ENVIRONMENT == "development" else logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
+app = FastAPI(
+    title="Control de Entregas",
+    version="0.1.0",
+    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
+    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
+    openapi_url="/openapi.json" if settings.ENVIRONMENT == "development" else None,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +55,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_SECURITY_HEADERS = {
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "default-src 'self'",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+}
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next: Any) -> Any:
+    response = await call_next(request)
+    for header, value in _SECURITY_HEADERS.items():
+        response.headers[header] = value
+    return response
 
 
 @app.exception_handler(EntidadNoEncontrada)
@@ -120,4 +150,5 @@ app.include_router(reportes.router)
 
 @app.get("/", response_model=HealthCheckResponse)
 async def health_check() -> HealthCheckResponse:
-    return HealthCheckResponse(status="ok", version="0.1.0")
+    version = "0.1.0" if settings.ENVIRONMENT == "development" else "hidden"
+    return HealthCheckResponse(status="ok", version=version)

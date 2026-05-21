@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -94,9 +94,9 @@ async def refresh(token: str, session: AsyncSession) -> RefreshResponse:
             token,
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
-            options={"leeway": settings.JWT_REFRESH_LEEWAY_SECONDS},
+            leeway=timedelta(seconds=settings.JWT_REFRESH_LEEWAY_SECONDS),
         )
-    except JWTError:
+    except jwt.PyJWTError:
         raise PermisoInsuficiente("Token inválido o expirado")
 
     user_id_str: str | None = payload.get("sub")

@@ -9,7 +9,10 @@ _PASSWORD_RULES = (
     (r".{8,}", "Debe tener al menos 8 caracteres."),
     (r"[A-Z]", "Debe contener al menos una letra mayúscula."),
     (r"[0-9]", "Debe contener al menos un número."),
-    (r"[!@#$%^&*()\-_=+\[\]{};:'\",.<>?/\\|`~]", "Debe contener al menos un carácter especial."),
+    (
+        r"[!@#$%^&*()\-_=+\[\]{};:'\",.<>?/\\|`~]",
+        "Debe contener al menos un carácter especial.",
+    ),
 )
 
 

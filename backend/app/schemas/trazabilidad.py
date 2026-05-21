@@ -14,8 +14,7 @@ class XmlResumen(BaseModel):
     )
     fecha_emision: date = Field(..., description="Fecha de emisión del XML")
     ruc_emisor: str = Field(..., description="RUC del emisor")
-    razon_social_emisor: str = Field(...,
-                                     description="Razón social del emisor")
+    razon_social_emisor: str = Field(..., description="Razón social del emisor")
     is_active: bool = Field(
         ..., description="False si el XML fue eliminado (soft delete)"
     )
@@ -23,10 +22,8 @@ class XmlResumen(BaseModel):
 
 class XmlItemResumen(BaseModel):
     id: UUID = Field(..., description="ID del ítem del XML")
-    codigo_principal: str = Field(...,
-                                  description="Código principal del producto")
-    descripcion: str = Field(...,
-                             description="Descripción del ítem en la factura")
+    codigo_principal: str = Field(..., description="Código principal del producto")
+    descripcion: str = Field(..., description="Descripción del ítem en la factura")
     cantidad_ingresada: Decimal = Field(
         ..., description="Cantidad ingresada al Kardex desde este ítem"
     )
@@ -55,8 +52,7 @@ class EntregaResumen(BaseModel):
     snap_nombre: str = Field(
         ..., description="Nombre del destinatario (snapshot inmutable)"
     )
-    total_entrega: Decimal = Field(...,
-                                   description="Valor total de la entrega")
+    total_entrega: Decimal = Field(..., description="Valor total de la entrega")
     saldo_pendiente: Decimal = Field(
         ..., description="Saldo pendiente al momento de la consulta"
     )
@@ -65,13 +61,10 @@ class EntregaResumen(BaseModel):
 
 class PagoResumen(BaseModel):
     id: UUID = Field(..., description="ID del pago")
-    numero_comprobante: str = Field(...,
-                                    description="Número del comprobante de pago")
+    numero_comprobante: str = Field(..., description="Número del comprobante de pago")
     fecha_pago: datetime = Field(..., description="Fecha y hora del pago")
-    banco_nombre: str = Field(...,
-                              description="Nombre del banco (desnormalizado)")
-    valor_total: Decimal = Field(...,
-                                 description="Valor total del comprobante")
+    banco_nombre: str = Field(..., description="Nombre del banco (desnormalizado)")
+    valor_total: Decimal = Field(..., description="Valor total del comprobante")
     estado: str = Field(..., description="activo | eliminado")
 
 
@@ -109,8 +102,7 @@ class EntregaConsumoTraza(BaseModel):
 
 
 class TrazabilidadXmlResponse(BaseModel):
-    xml: XmlResumen = Field(...,
-                            description="Nodo raíz: cabecera del XML consultado")
+    xml: XmlResumen = Field(..., description="Nodo raíz: cabecera del XML consultado")
     ingresos_kardex: list[IngresoKardexTraza] = Field(
         ..., description="Ítems del XML ingresados al Kardex"
     )
@@ -126,8 +118,7 @@ class TrazabilidadXmlResponse(BaseModel):
 
 
 class XmlOrigenTraza(BaseModel):
-    xml: XmlResumen = Field(...,
-                            description="XML de origen del lote consumido")
+    xml: XmlResumen = Field(..., description="XML de origen del lote consumido")
     xml_item: XmlItemResumen = Field(..., description="Ítem del XML de origen")
     cantidad_consumida: Decimal = Field(
         ..., description="Cantidad de ese XML consumida en la entrega"

@@ -23,8 +23,12 @@ async def obtener_dashboard(session: AsyncSession) -> DashboardResponse:
     agg_result = await session.execute(
         select(
             func.count(Entrega.id).label("entregas_activas"),
-            func.coalesce(func.sum(Entrega.saldo_pendiente), Decimal("0")).label("saldo_pendiente_total"),
-            func.coalesce(func.sum(Entrega.total_entrega), Decimal("0")).label("total_facturado"),
+            func.coalesce(func.sum(Entrega.saldo_pendiente), Decimal("0")).label(
+                "saldo_pendiente_total"
+            ),
+            func.coalesce(func.sum(Entrega.total_entrega), Decimal("0")).label(
+                "total_facturado"
+            ),
         ).where(
             Entrega.is_active.is_(True),
             Entrega.estado == EstadoEntrega.activa,

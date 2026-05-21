@@ -1,7 +1,7 @@
 """Integration tests for Dashboard endpoint."""
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from httpx import AsyncClient

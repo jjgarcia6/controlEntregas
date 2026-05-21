@@ -69,8 +69,12 @@ def auditar(accion: str, entidad: str) -> Callable[[F], F]:
             ctx = _audit_ctx.get({})
             _audit_ctx.reset(token)
 
-            payload_antes: dict[str, Any] | None = ctx.get("payload_antes") or kwargs.get("payload_antes")
-            payload_despues: dict[str, Any] | None = ctx.get("payload_despues") or kwargs.get("payload_despues")
+            payload_antes: dict[str, Any] | None = ctx.get(
+                "payload_antes"
+            ) or kwargs.get("payload_antes")
+            payload_despues: dict[str, Any] | None = ctx.get(
+                "payload_despues"
+            ) or kwargs.get("payload_despues")
 
             session: AsyncSession | None = kwargs.get("session")
             if session is None:

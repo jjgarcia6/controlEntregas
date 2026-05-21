@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,7 +32,7 @@ async def get_current_user(
         user_id_str: str | None = payload.get("sub")
         if user_id_str is None:
             raise NoAutenticado("Token inválido: sin subject")
-    except JWTError:
+    except jwt.PyJWTError:
         raise NoAutenticado("Token inválido o expirado")
 
     user_id = uuid.UUID(user_id_str)

@@ -12,18 +12,21 @@ vi.mock("../hooks/useDownloadReportePdf");
 vi.mock("../hooks/useDownloadReporteXlsx");
 vi.mock("@/features/kardex/hooks/useFetchProductos");
 vi.mock("@/features/bancos/hooks/useFetchBancos");
+vi.mock("@/features/entregas/hooks/useFetchEntregas");
 
 import { useFetchReporte } from "../hooks/useFetchReporte";
 import { useDownloadReportePdf } from "../hooks/useDownloadReportePdf";
 import { useDownloadReporteXlsx } from "../hooks/useDownloadReporteXlsx";
 import { useFetchProductos } from "@/features/kardex/hooks/useFetchProductos";
 import { useFetchBancos } from "@/features/bancos/hooks/useFetchBancos";
+import { useFetchEntregas } from "@/features/entregas/hooks/useFetchEntregas";
 
 const mockUseFetchReporte = vi.mocked(useFetchReporte);
 const mockUseDownloadReportePdf = vi.mocked(useDownloadReportePdf);
 const mockUseDownloadReporteXlsx = vi.mocked(useDownloadReporteXlsx);
 const mockUseFetchProductos = vi.mocked(useFetchProductos);
 const mockUseFetchBancos = vi.mocked(useFetchBancos);
+const mockUseFetchEntregas = vi.mocked(useFetchEntregas);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +48,10 @@ function setupBaseMocks() {
   mockUseFetchBancos.mockReturnValue({
     data: [],
   } as unknown as ReturnType<typeof useFetchBancos>);
+
+  mockUseFetchEntregas.mockReturnValue({
+    data: { items: [], total: 0, page: 1, page_size: 200 },
+  } as unknown as ReturnType<typeof useFetchEntregas>);
 }
 
 function renderContainer() {
