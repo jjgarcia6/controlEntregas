@@ -7,16 +7,19 @@ from app.schemas.auth import LoginRequest, LoginResponse, RefreshResponse
 from app.services import auth_service
 from app.utils.exceptions import PermisoInsuficiente
 from app.utils.rate_limit import ip_login_limiter
+from app.utils.request_meta import get_client_ip
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _bearer = HTTPBearer(auto_error=False)
 
 
-def _check_ip_limit(request: Request) -> str | None:
-    ip = request.client.host if request.client else None
+async def _check_ip_limit(
+    request: Request, session: AsyncSession = Depends(get_db)
+) -> str | None:
+    ip = get_client_ip(request)
     if ip:
-        ip_login_limiter.check_and_record(ip)
+        await ip_login_limiter.check_and_record(session, ip)
     return ip
 
 

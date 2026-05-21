@@ -180,7 +180,9 @@ def upgrade() -> None:
         ),
         sa.Column("cantidad_pendiente", sa.Numeric(12, 4), nullable=False),
         *AUDIT_COLS,
-        sa.ForeignKeyConstraint(["xml_id"], ["xmls.id"], name="fk_xml_items_xml_id_xmls"),
+        sa.ForeignKeyConstraint(
+            ["xml_id"], ["xmls.id"], name="fk_xml_items_xml_id_xmls"
+        ),
     )
 
     # 4–6. Indexes
@@ -262,9 +264,15 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     # Drop AuditMixin FK constraints — productos first
-    op.drop_constraint("fk_productos_deleted_by_usuarios", "productos", type_="foreignkey")
-    op.drop_constraint("fk_productos_updated_by_usuarios", "productos", type_="foreignkey")
-    op.drop_constraint("fk_productos_created_by_usuarios", "productos", type_="foreignkey")
+    op.drop_constraint(
+        "fk_productos_deleted_by_usuarios", "productos", type_="foreignkey"
+    )
+    op.drop_constraint(
+        "fk_productos_updated_by_usuarios", "productos", type_="foreignkey"
+    )
+    op.drop_constraint(
+        "fk_productos_created_by_usuarios", "productos", type_="foreignkey"
+    )
 
     # Drop AuditMixin FK constraints — xml_items
     op.drop_constraint(

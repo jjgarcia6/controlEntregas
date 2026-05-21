@@ -310,7 +310,9 @@ def downgrade() -> None:
     op.drop_constraint("fk_updated_by_usuarios", "entrega_items", type_="foreignkey")
     op.drop_constraint("fk_deleted_by_usuarios", "entrega_items", type_="foreignkey")
     op.drop_constraint("fk_created_by_usuarios", "entrega_items", type_="foreignkey")
-    op.drop_constraint("destinatarios_identificacion_key", "destinatarios", type_="unique")
+    op.drop_constraint(
+        "destinatarios_identificacion_key", "destinatarios", type_="unique"
+    )
     op.create_index(
         op.f("ix_destinatarios_identificacion"),
         "destinatarios",

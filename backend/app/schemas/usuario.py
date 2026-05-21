@@ -73,3 +73,13 @@ class UsuarioResponse(BaseModel):
     created_at: datetime = Field(..., description="Fecha de creación del registro")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UsuarioDesbloqueoResponse(BaseModel):
+    """Respuesta del endpoint de desbloqueo de intentos fallidos."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    usuario_id: uuid.UUID
+    email: str
+    intentos_eliminados: int

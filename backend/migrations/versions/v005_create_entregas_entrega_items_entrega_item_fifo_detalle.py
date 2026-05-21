@@ -5,6 +5,7 @@ Revises: v004
 Create Date: 2026-05-17
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -38,7 +39,9 @@ def upgrade() -> None:
         sa.Column("comentarios", sa.String(length=255), nullable=True),
         sa.Column("total_entrega", sa.Numeric(precision=12, scale=2), nullable=False),
         sa.Column("saldo_pendiente", sa.Numeric(precision=12, scale=2), nullable=False),
-        sa.Column("estado", estado_entrega_enum, nullable=False, server_default="activa"),
+        sa.Column(
+            "estado", estado_entrega_enum, nullable=False, server_default="activa"
+        ),
         sa.Column(
             "created_at",
             sa.TIMESTAMP(timezone=True),
@@ -55,7 +58,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("numero"),
     )
-    op.create_index("ix_entregas_destinatario_id", "entregas", ["destinatario_id"], unique=False)
+    op.create_index(
+        "ix_entregas_destinatario_id", "entregas", ["destinatario_id"], unique=False
+    )
     op.create_index("ix_entregas_estado", "entregas", ["estado"], unique=False)
 
     op.create_table(
@@ -99,7 +104,9 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("entrega_item_id", sa.UUID(), nullable=False),
         sa.Column("kardex_ingreso_id", sa.UUID(), nullable=False),
-        sa.Column("cantidad_consumida", sa.Numeric(precision=12, scale=4), nullable=False),
+        sa.Column(
+            "cantidad_consumida", sa.Numeric(precision=12, scale=4), nullable=False
+        ),
         sa.Column("costo_unitario", sa.Numeric(precision=12, scale=4), nullable=False),
         sa.ForeignKeyConstraint(["entrega_item_id"], ["entrega_items.id"]),
         sa.ForeignKeyConstraint(["kardex_ingreso_id"], ["kardex_movimientos.id"]),

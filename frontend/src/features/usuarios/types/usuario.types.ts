@@ -11,3 +11,15 @@ export const usuarioResponseSchema = z.object({
 });
 
 export type UsuarioResponseType = z.infer<typeof usuarioResponseSchema>;
+
+export const usuarioDesbloqueoSchema = z.object({
+  usuario_id: z.string().uuid().describe("ID del usuario desbloqueado"),
+  email: z.string().email().describe("Email del usuario"),
+  intentos_eliminados: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Cantidad de intentos fallidos eliminados"),
+});
+
+export type UsuarioDesbloqueoType = z.infer<typeof usuarioDesbloqueoSchema>;

@@ -46,8 +46,11 @@ class EncryptedString(TypeDecorator[str]):
             return None
         try:
             return _fernet().decrypt(value.encode()).decode()
-        except (InvalidToken, Exception):
-            return str(value)  # plaintext fallback during migration window
+        except InvalidToken as exc:
+            raise RuntimeError(
+                "Valor cifrado inválido en columna PII. "
+                "Verifique que ENCRYPTION_KEY no haya rotado sin re-cifrar datos."
+            ) from exc
 
 
 def hmac_hash(value: str) -> str:

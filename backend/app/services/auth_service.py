@@ -41,7 +41,7 @@ async def login(
     session: AsyncSession,
 ) -> LoginResponse:
     email_key = email.lower()
-    if email_failure_tracker.is_blocked(email_key):
+    if await email_failure_tracker.is_blocked(session, email_key):
         raise PermisoInsuficiente("Credenciales inválidas")
 
     result = await session.execute(select(Usuario).where(Usuario.email == email))
@@ -58,7 +58,7 @@ async def login(
         valid = False
 
     if not valid or usuario is None or not usuario.is_active:
-        email_failure_tracker.record_failure(email_key)
+        await email_failure_tracker.record_failure(session, email_key)
         raise PermisoInsuficiente("Credenciales inválidas")
 
     async with session.begin_nested():
@@ -75,7 +75,7 @@ async def login(
             )
         )
 
-    email_failure_tracker.reset(email_key)
+    await email_failure_tracker.reset(session, email_key)
     token = _crear_jwt(usuario)
     return LoginResponse(
         token=token,

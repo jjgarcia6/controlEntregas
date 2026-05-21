@@ -9,6 +9,7 @@ from app.models.usuario import Usuario
 from app.schemas.usuario import (
     PasswordUpdate,
     UsuarioCreate,
+    UsuarioDesbloqueoResponse,
     UsuarioResponse,
     UsuarioUpdate,
 )
@@ -85,3 +86,18 @@ async def desactivar(
             usuario_id=current_user.id,
             session=session,
         )
+
+
+@router.post("/{id}/desbloquear", response_model=UsuarioDesbloqueoResponse)
+async def desbloquear(
+    id: uuid.UUID,
+    current_user: Usuario = Depends(_admin_only),
+    session: AsyncSession = Depends(get_db),
+) -> UsuarioDesbloqueoResponse:
+    async with session.begin_nested():
+        resultado = await usuario_service.desbloquear_intentos_fallidos(
+            usuario_id=id,
+            admin_id=current_user.id,
+            session=session,
+        )
+    return UsuarioDesbloqueoResponse(**resultado)

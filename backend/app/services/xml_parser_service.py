@@ -1,11 +1,12 @@
-import xml.etree.ElementTree as ET  # nosec B405 — fromstring only, content pre-validated in memory
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
+from xml.etree.ElementTree import Element, ParseError
 
+import defusedxml.ElementTree as ET
+
+from app.config import settings
 from app.utils.exceptions import ValidacionNegocio
-
-_MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
 @dataclass
@@ -48,7 +49,7 @@ class XmlParseado:
     items: list[ItemParseado] = field(default_factory=list)
 
 
-def _get_text(elem: ET.Element, path: str, default: str | None = None) -> str | None:
+def _get_text(elem: Element, path: str, default: str | None = None) -> str | None:
     node = elem.find(path)
     if node is None or node.text is None:
         return default
@@ -56,7 +57,7 @@ def _get_text(elem: ET.Element, path: str, default: str | None = None) -> str | 
     return text if text else default
 
 
-def _require_text(elem: ET.Element, path: str, label: str) -> str:
+def _require_text(elem: Element, path: str, label: str) -> str:
     value = _get_text(elem, path)
     if not value:
         raise ValidacionNegocio(f"Campo requerido ausente en el XML: {label}")
@@ -73,17 +74,24 @@ def _to_decimal(value: str | None, default: Decimal = Decimal("0")) -> Decimal:
 
 
 def parsear(xml_content: str) -> XmlParseado:
-    if len(xml_content.encode("utf-8")) > _MAX_SIZE_BYTES:
+    # Defensa en profundidad: el router ya valida el tamaño en read; este check
+    # protege llamadas directas al parser (tests, otros services).
+    max_bytes = settings.MAX_XML_UPLOAD_MB * 1024 * 1024
+    if len(xml_content.encode("utf-8")) > max_bytes:
         raise ValidacionNegocio(
-            "El archivo XML supera el tamaño máximo permitido de 5 MB"
+            f"El archivo XML supera el tamaño máximo permitido de "
+            f"{settings.MAX_XML_UPLOAD_MB} MB"
         )
 
     try:
-        root = ET.fromstring(
-            xml_content
-        )  # nosec B314 — UTF-8 decoded, size-limited to 5 MB, no external entity loading
-    except ET.ParseError:
+        root = ET.fromstring(xml_content)
+    except ParseError:
         raise ValidacionNegocio("Archivo no es XML válido")
+    except Exception as exc:
+        # defusedxml lanza EntitiesForbidden, DTDForbidden, ExternalReferenceForbidden, etc.
+        raise ValidacionNegocio(
+            f"Archivo XML contiene construcciones no permitidas: {type(exc).__name__}"
+        )
 
     if root.tag != "factura":
         raise ValidacionNegocio("Formato no corresponde a factura SRI 2.x")

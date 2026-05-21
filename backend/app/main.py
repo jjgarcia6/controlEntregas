@@ -33,25 +33,26 @@ from app.utils.exceptions import (
     ValidacionNegocio,
 )
 
+# Normalizar ENVIRONMENT
+_IS_DEVELOPMENT = settings.ENVIRONMENT.strip().lower() == "development"
+
 logging.basicConfig(
-    level=logging.DEBUG if settings.ENVIRONMENT == "development" else logging.INFO,
+    level=logging.DEBUG if _IS_DEVELOPMENT else logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 
 app = FastAPI(
     title="Control de Entregas",
     version="0.1.0",
-    docs_url="/docs" if settings.ENVIRONMENT == "development" else None,
-    redoc_url="/redoc" if settings.ENVIRONMENT == "development" else None,
-    openapi_url="/openapi.json" if settings.ENVIRONMENT == "development" else None,
+    docs_url="/docs" if _IS_DEVELOPMENT else None,
+    redoc_url="/redoc" if _IS_DEVELOPMENT else None,
+    openapi_url="/openapi.json" if _IS_DEVELOPMENT else None,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=(
-        ["*"] if settings.ENVIRONMENT == "development" else settings.cors_origins_list
-    ),
-    allow_credentials=settings.ENVIRONMENT != "development",
+    allow_origins=["*"] if _IS_DEVELOPMENT else settings.cors_origins_list,
+    allow_credentials=not _IS_DEVELOPMENT,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -60,9 +61,43 @@ _SECURITY_HEADERS = {
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "default-src 'self'",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    ),
     "Referrer-Policy": "strict-origin-when-cross-origin",
 }
+
+
+@app.middleware("http")
+async def limit_request_size(request: Request, call_next: Any) -> Any:
+    """
+    Rechaza requests con Content-Length mayor al límite configurado.
+    Defensa global; los endpoints de upload tienen sus propios límites más específicos.
+    """
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            length = int(content_length)
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Content-Length inválido"},
+            )
+        max_bytes = settings.MAX_REQUEST_BODY_MB * 1024 * 1024
+        if length > max_bytes:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "detail": (
+                        f"Request body supera el máximo permitido de "
+                        f"{settings.MAX_REQUEST_BODY_MB} MB"
+                    )
+                },
+            )
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -150,5 +185,5 @@ app.include_router(reportes.router)
 
 @app.get("/", response_model=HealthCheckResponse)
 async def health_check() -> HealthCheckResponse:
-    version = "0.1.0" if settings.ENVIRONMENT == "development" else "hidden"
+    version = "0.1.0" if _IS_DEVELOPMENT else "hidden"
     return HealthCheckResponse(status="ok", version=version)

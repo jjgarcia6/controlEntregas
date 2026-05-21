@@ -97,7 +97,9 @@ def upgrade() -> None:
         ),
         sa.Column(
             "tipo_identificacion",
-            postgresql.ENUM("cedula", "ruc", name="tipo_identificacion", create_type=False),
+            postgresql.ENUM(
+                "cedula", "ruc", name="tipo_identificacion", create_type=False
+            ),
             nullable=False,
         ),
         sa.Column("identificacion", sa.String(13), nullable=False),
@@ -125,18 +127,33 @@ def upgrade() -> None:
     op.create_index("ix_usuarios_email", "usuarios", ["email"], unique=True)
     op.create_index("ix_bancos_nombre", "bancos", ["nombre"], unique=True)
     op.create_index(
-        "ix_destinatarios_identificacion", "destinatarios", ["identificacion"], unique=True
+        "ix_destinatarios_identificacion",
+        "destinatarios",
+        ["identificacion"],
+        unique=True,
     )
 
     # 5. Add FK constraints for usuarios self-referencing audit fields
     op.create_foreign_key(
-        "fk_usuarios_created_by_usuarios", "usuarios", "usuarios", ["created_by"], ["id"]
+        "fk_usuarios_created_by_usuarios",
+        "usuarios",
+        "usuarios",
+        ["created_by"],
+        ["id"],
     )
     op.create_foreign_key(
-        "fk_usuarios_updated_by_usuarios", "usuarios", "usuarios", ["updated_by"], ["id"]
+        "fk_usuarios_updated_by_usuarios",
+        "usuarios",
+        "usuarios",
+        ["updated_by"],
+        ["id"],
     )
     op.create_foreign_key(
-        "fk_usuarios_deleted_by_usuarios", "usuarios", "usuarios", ["deleted_by"], ["id"]
+        "fk_usuarios_deleted_by_usuarios",
+        "usuarios",
+        "usuarios",
+        ["deleted_by"],
+        ["id"],
     )
 
     # 6. Add FK constraints for bancos audit fields

@@ -1,4 +1,5 @@
 from app.models.audit_log import AuditLog
+from app.models.auth_attempt import AuthAttempt
 from app.models.banco import Banco
 from app.models.base import AuditMixin, Base
 from app.models.destinatario import Destinatario
@@ -42,4 +43,5 @@ __all__ = [
     "Xml",
     "XmlItem",
     "XmlItemIngreso",
+    "AuthAttempt",
 ]

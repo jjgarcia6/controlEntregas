@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { UsuarioResponseType } from "../types/usuario.types";
+import { DesbloquearButton } from "./DesbloquearButton";
 
 interface UsuariosListProps {
   usuarios: UsuarioResponseType[];
@@ -64,6 +65,7 @@ export function UsuariosList({
               >
                 Contraseña
               </Button>
+              <DesbloquearButton usuarioId={u.id} nombre={u.nombre} />
               <Button
                 size="sm"
                 variant="ghost"

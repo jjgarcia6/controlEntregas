@@ -15,7 +15,7 @@ from app.schemas.xml import (
     XmlResponse,
 )
 from app.services import kardex_service, xml_service
-from app.utils.exceptions import ValidacionNegocio
+from app.utils.uploads import read_xml_upload_as_text
 
 router = APIRouter(prefix="/xmls", tags=["xmls"])
 
@@ -28,10 +28,7 @@ async def preview(
     file: UploadFile = File(...),
     _: Usuario = Depends(_operador_roles),
 ) -> XmlPreviewResponse:
-    try:
-        content = (await file.read()).decode("utf-8")
-    except UnicodeDecodeError:
-        raise ValidacionNegocio("El archivo no tiene codificación UTF-8 válida")
+    content = await read_xml_upload_as_text(file)
     return await xml_service.preview(content)
 
 
@@ -41,10 +38,7 @@ async def confirmar_ingreso(
     current_user: Usuario = Depends(_operador_roles),
     session: AsyncSession = Depends(get_db),
 ) -> XmlResponse:
-    try:
-        content = (await file.read()).decode("utf-8")
-    except UnicodeDecodeError:
-        raise ValidacionNegocio("El archivo no tiene codificación UTF-8 válida")
+    content = await read_xml_upload_as_text(file)
     async with session.begin_nested():
         xml = await xml_service.confirmar_ingreso(
             content,

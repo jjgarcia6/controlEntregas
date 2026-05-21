@@ -5,6 +5,7 @@ Revises: v003
 Create Date: 2026-05-13
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -54,15 +55,24 @@ def upgrade() -> None:
         sa.Column("deleted_by", sa.UUID(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["created_by"], ["usuarios.id"], name="fk_created_by_usuarios", use_alter=True
+            ["created_by"],
+            ["usuarios.id"],
+            name="fk_created_by_usuarios",
+            use_alter=True,
         ),
         sa.ForeignKeyConstraint(
-            ["deleted_by"], ["usuarios.id"], name="fk_deleted_by_usuarios", use_alter=True
+            ["deleted_by"],
+            ["usuarios.id"],
+            name="fk_deleted_by_usuarios",
+            use_alter=True,
         ),
         sa.ForeignKeyConstraint(["lote_fifo_id"], ["kardex_movimientos.id"]),
         sa.ForeignKeyConstraint(["producto_id"], ["productos.id"]),
         sa.ForeignKeyConstraint(
-            ["updated_by"], ["usuarios.id"], name="fk_updated_by_usuarios", use_alter=True
+            ["updated_by"],
+            ["usuarios.id"],
+            name="fk_updated_by_usuarios",
+            use_alter=True,
         ),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -76,7 +86,9 @@ def upgrade() -> None:
         "xml_item_ingresos",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("xml_item_id", sa.UUID(), nullable=False),
-        sa.Column("cantidad_ingresada", sa.Numeric(precision=12, scale=4), nullable=False),
+        sa.Column(
+            "cantidad_ingresada", sa.Numeric(precision=12, scale=4), nullable=False
+        ),
         sa.Column("kardex_movimiento_id", sa.UUID(), nullable=False),
         sa.Column(
             "created_at",
@@ -91,14 +103,23 @@ def upgrade() -> None:
         sa.Column("deleted_by", sa.UUID(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["created_by"], ["usuarios.id"], name="fk_created_by_usuarios", use_alter=True
+            ["created_by"],
+            ["usuarios.id"],
+            name="fk_created_by_usuarios",
+            use_alter=True,
         ),
         sa.ForeignKeyConstraint(
-            ["deleted_by"], ["usuarios.id"], name="fk_deleted_by_usuarios", use_alter=True
+            ["deleted_by"],
+            ["usuarios.id"],
+            name="fk_deleted_by_usuarios",
+            use_alter=True,
         ),
         sa.ForeignKeyConstraint(["kardex_movimiento_id"], ["kardex_movimientos.id"]),
         sa.ForeignKeyConstraint(
-            ["updated_by"], ["usuarios.id"], name="fk_updated_by_usuarios", use_alter=True
+            ["updated_by"],
+            ["usuarios.id"],
+            name="fk_updated_by_usuarios",
+            use_alter=True,
         ),
         sa.ForeignKeyConstraint(["xml_item_id"], ["xml_items.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -108,7 +129,9 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("xml_item_ingresos")
-    op.drop_index("ix_kardex_movimientos_producto_fecha", table_name="kardex_movimientos")
+    op.drop_index(
+        "ix_kardex_movimientos_producto_fecha", table_name="kardex_movimientos"
+    )
     op.drop_table("kardex_movimientos")
     sa.Enum(name="origen_movimiento").drop(op.get_bind(), checkfirst=False)
     sa.Enum(name="tipo_movimiento").drop(op.get_bind(), checkfirst=False)

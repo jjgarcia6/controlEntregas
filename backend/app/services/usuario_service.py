@@ -5,6 +5,7 @@ import bcrypt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.audit_log import AuditLog
 from app.models.usuario import Usuario
 from app.schemas.usuario import (
     PasswordUpdate,
@@ -14,6 +15,7 @@ from app.schemas.usuario import (
 )
 from app.utils.audit import auditar, safe_dict, set_audit_payload
 from app.utils.exceptions import ConflictoUnicidad, EntidadNoEncontrada
+from app.utils.rate_limit import email_failure_tracker
 
 
 async def listar(session: AsyncSession) -> list[UsuarioResponse]:
@@ -102,6 +104,39 @@ async def actualizar(
         ),
     )
     return UsuarioResponse.model_validate(usuario)
+
+
+@auditar("UNLOCK", "usuarios")
+async def desbloquear_intentos_fallidos(
+    usuario_id: uuid.UUID,
+    admin_id: uuid.UUID,
+    session: AsyncSession,
+) -> dict:
+    """Elimina los intentos fallidos del email del usuario. Registra auditoría."""
+    result = await session.execute(
+        select(Usuario).where(Usuario.id == usuario_id, Usuario.is_active.is_(True))
+    )
+    usuario = result.scalar_one_or_none()
+    if usuario is None:
+        raise EntidadNoEncontrada("Usuario no encontrado o inactivo")
+
+    eliminados = await email_failure_tracker.reset(session, usuario.email.lower())
+
+    session.add(
+        AuditLog(
+            usuario_id=admin_id,
+            accion="UNLOCK_USER",
+            entidad="usuarios",
+            entidad_id=usuario_id,
+            payload_despues={"intentos_eliminados": eliminados},
+        )
+    )
+
+    return {
+        "usuario_id": usuario_id,
+        "email": usuario.email,
+        "intentos_eliminados": eliminados,
+    }
 
 
 @auditar("UPDATE", "usuarios")

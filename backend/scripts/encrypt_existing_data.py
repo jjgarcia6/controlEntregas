@@ -62,17 +62,22 @@ async def migrate() -> None:
     async with AsyncSession(engine) as session:
         async with session.begin():
             # --- destinatarios ---
-            rows = (await session.execute(text(
-                "SELECT id, identificacion, nombre, direccion, telefono, email "
-                "FROM destinatarios"
-            ))).fetchall()
+            rows = (
+                await session.execute(
+                    text(
+                        "SELECT id, identificacion, nombre, direccion, telefono, email "
+                        "FROM destinatarios"
+                    )
+                )
+            ).fetchall()
 
             dest_updated = 0
             for row in rows:
                 id_, ident, nombre, direccion, telefono, email = row
                 if _is_encrypted(ident):
                     continue  # already migrated
-                await session.execute(text("""
+                await session.execute(
+                    text("""
                     UPDATE destinatarios SET
                         identificacion      = :identificacion,
                         identificacion_hash = :identificacion_hash,
@@ -81,59 +86,69 @@ async def migrate() -> None:
                         telefono            = :telefono,
                         email               = :email
                     WHERE id = :id
-                """), {
-                    "id": id_,
-                    "identificacion":      _encrypt(ident),
-                    "identificacion_hash": hmac_hash(ident),
-                    "nombre":              _encrypt(nombre),
-                    "direccion":           _encrypt(direccion),
-                    "telefono":            _encrypt(telefono),
-                    "email":               _encrypt(email),
-                })
+                """),
+                    {
+                        "id": id_,
+                        "identificacion": _encrypt(ident),
+                        "identificacion_hash": hmac_hash(ident),
+                        "nombre": _encrypt(nombre),
+                        "direccion": _encrypt(direccion),
+                        "telefono": _encrypt(telefono),
+                        "email": _encrypt(email),
+                    },
+                )
                 dest_updated += 1
             print(f"destinatarios: {dest_updated}/{len(rows)} filas cifradas")
 
             # --- pagos ---
-            rows = (await session.execute(text(
-                "SELECT id, nombre_titular FROM pagos"
-            ))).fetchall()
+            rows = (
+                await session.execute(text("SELECT id, nombre_titular FROM pagos"))
+            ).fetchall()
 
             pagos_updated = 0
             for row in rows:
                 id_, nombre_titular = row
                 if _is_encrypted(nombre_titular):
                     continue
-                await session.execute(text(
-                    "UPDATE pagos SET nombre_titular = :v WHERE id = :id"
-                ), {"id": id_, "v": _encrypt(nombre_titular)})
+                await session.execute(
+                    text("UPDATE pagos SET nombre_titular = :v WHERE id = :id"),
+                    {"id": id_, "v": _encrypt(nombre_titular)},
+                )
                 pagos_updated += 1
             print(f"pagos: {pagos_updated}/{len(rows)} filas cifradas")
 
             # --- entregas (snap fields) ---
-            rows = (await session.execute(text(
-                "SELECT id, snap_identificacion, snap_nombre, snap_direccion, snap_telefono "
-                "FROM entregas"
-            ))).fetchall()
+            rows = (
+                await session.execute(
+                    text(
+                        "SELECT id, snap_identificacion, snap_nombre, snap_direccion, snap_telefono "
+                        "FROM entregas"
+                    )
+                )
+            ).fetchall()
 
             entregas_updated = 0
             for row in rows:
                 id_, snap_id, snap_nom, snap_dir, snap_tel = row
                 if _is_encrypted(snap_id):
                     continue
-                await session.execute(text("""
+                await session.execute(
+                    text("""
                     UPDATE entregas SET
                         snap_identificacion = :snap_id,
                         snap_nombre         = :snap_nom,
                         snap_direccion      = :snap_dir,
                         snap_telefono       = :snap_tel
                     WHERE id = :id
-                """), {
-                    "id": id_,
-                    "snap_id":  _encrypt(snap_id),
-                    "snap_nom": _encrypt(snap_nom),
-                    "snap_dir": _encrypt(snap_dir),
-                    "snap_tel": _encrypt(snap_tel),
-                })
+                """),
+                    {
+                        "id": id_,
+                        "snap_id": _encrypt(snap_id),
+                        "snap_nom": _encrypt(snap_nom),
+                        "snap_dir": _encrypt(snap_dir),
+                        "snap_tel": _encrypt(snap_tel),
+                    },
+                )
                 entregas_updated += 1
             print(f"entregas: {entregas_updated}/{len(rows)} filas cifradas")
 

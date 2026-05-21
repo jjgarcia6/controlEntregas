@@ -26,13 +26,11 @@ async def seed() -> None:
             ).decode()
 
             await session.execute(
-                text(
-                    """
+                text("""
                     INSERT INTO usuarios (id, email, password_hash, nombre, rol, is_active)
                     VALUES (:id, :email, :password_hash, :nombre, :rol, true)
                     ON CONFLICT (email) DO NOTHING
-                    """
-                ),
+                    """),
                 {
                     "id": admin_id,
                     "email": settings.ADMIN_EMAIL,
@@ -59,13 +57,11 @@ async def seed() -> None:
 
             for nombre in bancos:
                 await session.execute(
-                    text(
-                        """
+                    text("""
                         INSERT INTO bancos (id, nombre, is_active)
                         VALUES (gen_random_uuid(), :nombre, true)
                         ON CONFLICT (nombre) DO NOTHING
-                        """
-                    ),
+                        """),
                     {"nombre": nombre},
                 )
 
