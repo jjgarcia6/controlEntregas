@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from xml.etree.ElementTree import Element, ParseError
+from typing import TYPE_CHECKING
 
 import defusedxml.ElementTree as ET
+
+if TYPE_CHECKING:
+    from xml.etree.ElementTree import Element  # nosec B405
+
+ParseError = ET.ParseError
 
 from app.config import settings
 from app.utils.exceptions import ValidacionNegocio
