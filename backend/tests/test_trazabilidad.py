@@ -6,6 +6,8 @@ from typing import Dict
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -74,7 +76,7 @@ async def _get_token(client: AsyncClient, email: str, password: str) -> str:
 
 
 async def _admin_token(client: AsyncClient) -> str:
-    return await _get_token(client, "admin@sistema.com", "Admin1234!")
+    return await _get_token(client, "admin@sistema.com", settings.ADMIN_PASSWORD)
 
 
 async def _create_user_token(

@@ -8,10 +8,13 @@ from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
+
 
 async def _admin_token(client: AsyncClient) -> str:
     resp = await client.post(
-        "/auth/login", json={"email": "admin@sistema.com", "password": "Admin1234!"}
+        "/auth/login",
+        json={"email": "admin@sistema.com", "password": settings.ADMIN_PASSWORD},
     )
     return str(resp.json()["token"])
 

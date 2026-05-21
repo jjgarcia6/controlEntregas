@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
+
 
 async def _token(test_client: AsyncClient, email: str, password: str) -> str:
     resp = await test_client.post(
@@ -12,7 +14,7 @@ async def _token(test_client: AsyncClient, email: str, password: str) -> str:
 
 
 async def _admin_token(test_client: AsyncClient) -> str:
-    return await _token(test_client, "admin@sistema.com", "Admin1234!")
+    return await _token(test_client, "admin@sistema.com", settings.ADMIN_PASSWORD)
 
 
 async def _create_operador(test_client: AsyncClient, admin_token: str) -> str:

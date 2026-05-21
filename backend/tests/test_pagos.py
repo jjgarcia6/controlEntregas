@@ -8,6 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.entrega import Entrega
 
 # ---------------------------------------------------------------------------
@@ -88,7 +89,7 @@ async def _get_token(client: AsyncClient, email: str, password: str) -> str:
 
 
 async def _admin_token(client: AsyncClient) -> str:
-    return await _get_token(client, "admin@sistema.com", "Admin1234!")
+    return await _get_token(client, "admin@sistema.com", settings.ADMIN_PASSWORD)
 
 
 async def _create_user_token(

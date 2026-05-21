@@ -3,13 +3,15 @@
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
 from app.utils.rate_limit import email_failure_tracker, ip_login_limiter
 
 
 @pytest.mark.asyncio
 async def test_login_success(test_client: AsyncClient) -> None:
     resp = await test_client.post(
-        "/auth/login", json={"email": "admin@sistema.com", "password": "Admin1234!"}
+        "/auth/login",
+        json={"email": "admin@sistema.com", "password": settings.ADMIN_PASSWORD},
     )
     assert resp.status_code == 200
     data = resp.json()
@@ -39,7 +41,8 @@ async def test_login_nonexistent_user(test_client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_refresh_success(test_client: AsyncClient) -> None:
     login = await test_client.post(
-        "/auth/login", json={"email": "admin@sistema.com", "password": "Admin1234!"}
+        "/auth/login",
+        json={"email": "admin@sistema.com", "password": settings.ADMIN_PASSWORD},
     )
     token = login.json()["token"]
     resp = await test_client.post(
@@ -97,7 +100,7 @@ async def test_successful_login_resets_email_counter(test_client: AsyncClient) -
         )
     resp = await test_client.post(
         "/auth/login",
-        json={"email": "admin@sistema.com", "password": "Admin1234!"},
+        json={"email": "admin@sistema.com", "password": settings.ADMIN_PASSWORD},
     )
     assert resp.status_code == 200
     assert not email_failure_tracker.is_blocked("admin@sistema.com")
@@ -108,7 +111,8 @@ async def test_rol_insuficiente(test_client: AsyncClient) -> None:
     """Operador trying to create a user gets 403."""
     # Create operador via admin API
     admin_login = await test_client.post(
-        "/auth/login", json={"email": "admin@sistema.com", "password": "Admin1234!"}
+        "/auth/login",
+        json={"email": "admin@sistema.com", "password": settings.ADMIN_PASSWORD},
     )
     admin_token = admin_login.json()["token"]
     await test_client.post(

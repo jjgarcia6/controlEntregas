@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from app.config import settings
+
 _CEDULA_VALIDA = "1713175071"  # valid ecuadorian cedula (modulo-10)
 _RUC_VALIDO = "1713175071001"  # valid RUC derived from above cedula
 _CEDULA_INVALIDA = "1234567890"  # bad checksum
@@ -10,7 +12,8 @@ _CEDULA_INVALIDA = "1234567890"  # bad checksum
 
 async def _admin_token(test_client: AsyncClient) -> str:
     resp = await test_client.post(
-        "/auth/login", json={"email": "admin@sistema.com", "password": "Admin1234!"}
+        "/auth/login",
+        json={"email": "admin@sistema.com", "password": settings.ADMIN_PASSWORD},
     )
     return str(resp.json()["token"])
 
