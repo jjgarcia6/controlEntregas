@@ -2,9 +2,9 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.utils.rate_limit import email_failure_tracker, ip_login_limiter
 
 
 @pytest.mark.asyncio
@@ -61,38 +61,43 @@ async def test_protected_endpoint_no_auth(test_client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_email_rate_limit(test_client: AsyncClient) -> None:
     """5 consecutive failures for the same email trigger 403 on the 6th attempt."""
-    email_failure_tracker.reset("ratelimit_email_test@test.com")
+    email = "ratelimit_email_test@test.com"
     for _ in range(5):
         await test_client.post(
-            "/auth/login",
-            json={"email": "ratelimit_email_test@test.com", "password": "wrong"},
+            "/auth/login", json={"email": email, "password": "wrong"}
         )
     resp = await test_client.post(
-        "/auth/login",
-        json={"email": "ratelimit_email_test@test.com", "password": "wrong"},
+        "/auth/login", json={"email": email, "password": "wrong"}
     )
     assert resp.status_code == 403
-    email_failure_tracker.reset("ratelimit_email_test@test.com")
 
 
 @pytest.mark.asyncio
 async def test_ip_rate_limit(test_client: AsyncClient) -> None:
-    """11 requests from the same IP within a minute trigger 429."""
-    test_ip = "10.0.0.99"
-    ip_login_limiter.reset(test_ip)
+    """11 requests from the same IP within a minute trigger 429 via the endpoint."""
+    headers = {"X-Forwarded-For": "10.0.0.99"}
     for _ in range(10):
-        ip_login_limiter.check_and_record(test_ip)
-    from app.utils.exceptions import LimiteSolicitudes
-
-    with pytest.raises(LimiteSolicitudes):
-        ip_login_limiter.check_and_record(test_ip)
-    ip_login_limiter.reset(test_ip)
+        await test_client.post(
+            "/auth/login",
+            json={"email": "any@test.com", "password": "wrong"},
+            headers=headers,
+        )
+    resp = await test_client.post(
+        "/auth/login",
+        json={"email": "any@test.com", "password": "wrong"},
+        headers=headers,
+    )
+    assert resp.status_code == 429
 
 
 @pytest.mark.asyncio
-async def test_successful_login_resets_email_counter(test_client: AsyncClient) -> None:
+async def test_successful_login_resets_email_counter(
+    test_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
     """A successful login clears the failure counter for that email."""
-    email_failure_tracker.reset(settings.ADMIN_EMAIL)
+    from app.utils.rate_limit import email_failure_tracker
+
     for _ in range(3):
         await test_client.post(
             "/auth/login",
@@ -103,7 +108,9 @@ async def test_successful_login_resets_email_counter(test_client: AsyncClient) -
         json={"email": settings.ADMIN_EMAIL, "password": settings.ADMIN_PASSWORD},
     )
     assert resp.status_code == 200
-    assert not email_failure_tracker.is_blocked(settings.ADMIN_EMAIL)
+    assert not await email_failure_tracker.is_blocked(
+        db_session, settings.ADMIN_EMAIL.lower()
+    )
 
 
 @pytest.mark.asyncio
@@ -142,3 +149,54 @@ async def test_rol_insuficiente(test_client: AsyncClient) -> None:
         headers={"Authorization": f"Bearer {token}"},
     )
     assert resp.status_code == 403
+
+
+# ─── A5: X-Forwarded-For ────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a5_x_forwarded_for_se_usa_como_ip(
+    test_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """
+    A5: cuando llega X-Forwarded-For, el rate limiter usa esa IP, no la del proxy.
+    Verificamos que 10 intentos con la misma X-Forwarded-For bloquean la siguiente.
+    """
+    forwarded_ip = "203.0.113.42"
+    for _ in range(10):
+        await test_client.post(
+            "/auth/login",
+            json={"email": "any@test.com", "password": "wrong"},
+            headers={"X-Forwarded-For": f"{forwarded_ip}, 10.0.0.1"},
+        )
+    resp = await test_client.post(
+        "/auth/login",
+        json={"email": "any@test.com", "password": "wrong"},
+        headers={"X-Forwarded-For": f"{forwarded_ip}, 10.0.0.1"},
+    )
+    assert resp.status_code == 429
+
+    # Verificar que la fila en BD tiene exactamente la primera IP del XFF,
+    # no la del proxy
+    from app.models.auth_attempt import AuthAttempt
+    from sqlalchemy import select
+
+    result = await db_session.execute(
+        select(AuthAttempt).where(AuthAttempt.key == f"ip:{forwarded_ip}")
+    )
+    rows = result.scalars().all()
+    assert len(rows) >= 10  # al menos los 10 que insertamos
+
+
+@pytest.mark.asyncio
+async def test_a5_sin_x_forwarded_for_usa_client_host(
+    test_client: AsyncClient,
+) -> None:
+    """A5: sin X-Forwarded-For, get_client_ip cae a request.client.host (no rompe)."""
+    # No fallar si el test se ejecuta sin el header
+    resp = await test_client.post(
+        "/auth/login", json={"email": "any@test.com", "password": "wrong"}
+    )
+    # No importa el código exacto; importa que el endpoint no rompa por falta del header
+    assert resp.status_code in (401, 403, 429)

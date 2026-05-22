@@ -110,7 +110,7 @@ rules:
 
   tasks:
     - "Las tareas DEBEN seguir el orden: Contrato → Migraciones → Backend → Frontend → Seguridad → Pruebas. No se avanza a la siguiente fase si la anterior tiene ítems pendientes (dependencia explícita)."
-    - "Obligatorio: Incluir pasos de análisis estático (Ruff, Mypy, Bandit, ESLint) y SCA (Snyk/Trivy)."
+    - "Obligatorio: Incluir pasos de análisis estático (Ruff, Black, Mypy, Bandit, ESLint) y SCA (Snyk/Trivy)."
     - Cada tarea DEBE ser lo suficientemente pequeña para completarse en una sesión (KISS).
     - 'Prohibido crear tareas genéricas como "refactorizar X". Cada tarea DEBE nombrar el archivo o módulo exacto que se va a modificar (Clean Code).'
     - Cada tarea de Backend DEBE incluir la migración Alembic si altera el modelo de datos.

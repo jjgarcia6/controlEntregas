@@ -134,3 +134,42 @@ def test_tarifa_iva_extraida_del_xml_0() -> None:
     item = result.items[0]
 
     assert item.tarifa_iva == Decimal("0")
+
+
+# ─── A2 / A3: upload size and defusedxml ────────────────────────────────────
+
+
+def test_a3_billion_laughs_es_rechazado() -> None:
+    """A3: defusedxml debe rechazar XMLs con entity expansion (DoS)."""
+    billion_laughs = """<?xml version="1.0"?>
+<!DOCTYPE lolz [
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;">
+]>
+<factura id="comprobante" version="2.1.0">&lol3;</factura>"""
+    with pytest.raises(ValidacionNegocio) as exc_info:
+        xml_parser_service.parsear(billion_laughs)
+    msg = str(exc_info.value).lower()
+    assert "no permitidas" in msg or "no es xml válido" in msg or "xml válido" in msg
+
+
+def test_a3_dtd_externo_es_rechazado() -> None:
+    """A3: defusedxml debe rechazar XMLs que intentan cargar DTDs externos."""
+    xml_con_dtd = """<?xml version="1.0"?>
+<!DOCTYPE factura SYSTEM "http://attacker.com/evil.dtd">
+<factura id="comprobante" version="2.1.0"/>"""
+    with pytest.raises(ValidacionNegocio):
+        xml_parser_service.parsear(xml_con_dtd)
+
+
+def test_a2_xml_supera_max_size_es_rechazado() -> None:
+    """A2: el parser rechaza contenidos que superan MAX_XML_UPLOAD_MB."""
+    from app.config import settings
+
+    excess_bytes = settings.MAX_XML_UPLOAD_MB * 1024 * 1024 + 100 * 1024
+    padding = "x" * excess_bytes
+    xml = f"<factura id='comprobante' version='2.1.0'><pad>{padding}</pad></factura>"
+    with pytest.raises(ValidacionNegocio) as exc_info:
+        xml_parser_service.parsear(xml)
+    assert "MB" in str(exc_info.value)

@@ -14,6 +14,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _bearer = HTTPBearer(auto_error=False)
 
 
+# Nota: `session` aquí y en login() son la MISMA instancia porque FastAPI
+# cachea Depends() por request. El INSERT del rate limit y el resto del flujo
+# de login se commitean en la misma transacción.
 async def _check_ip_limit(
     request: Request, session: AsyncSession = Depends(get_db)
 ) -> str | None:

@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.utils.encryption import EncryptedString
 
 
 async def _admin_token(client: AsyncClient) -> str:
@@ -106,6 +107,7 @@ async def test_dashboard_entregas_solo_con_saldo_pendiente(
 
     # Insert an activa entrega with saldo_pendiente=0 (fully cobrada) and the
     # oldest possible created_at so it would appear first if the filter were wrong.
+    _es = EncryptedString()
     entrega_id = uuid.uuid4()
     await db_session.execute(
         text("""
@@ -114,12 +116,19 @@ async def test_dashboard_entregas_solo_con_saldo_pendiente(
                 snap_direccion, snap_telefono, total_entrega, saldo_pendiente,
                 estado, is_active, created_at, updated_at
             ) VALUES (
-                :id, :destinatario_id, '1713175071', 'Test Dash 6.1f',
-                'Av Test 123', '0990000001', 100.00, 0.00,
+                :id, :destinatario_id, :snap_id, :snap_nombre,
+                :snap_dir, :snap_tel, 100.00, 0.00,
                 'activa', true, '2020-01-01 00:00:00', '2020-01-01 00:00:00'
             )
         """),
-        {"id": entrega_id, "destinatario_id": destinatario_id},
+        {
+            "id": entrega_id,
+            "destinatario_id": destinatario_id,
+            "snap_id": _es.process_bind_param("1713175071", None),
+            "snap_nombre": _es.process_bind_param("Test Dash 6.1f", None),
+            "snap_dir": _es.process_bind_param("Av Test 123", None),
+            "snap_tel": _es.process_bind_param("0990000001", None),
+        },
     )
     await db_session.flush()
 
@@ -326,6 +335,7 @@ async def test_dashboard_ultimas_entregas_max_5(
     assert dest_resp.status_code in (200, 201), dest_resp.text
     destinatario_id = dest_resp.json()["id"]
 
+    _es = EncryptedString()
     for i in range(7):
         await db_session.execute(
             text("""
@@ -334,14 +344,22 @@ async def test_dashboard_ultimas_entregas_max_5(
                     snap_direccion, snap_telefono, total_entrega, saldo_pendiente,
                     estado, is_active, created_at, updated_at
                 ) VALUES (
-                    :id, :destinatario_id, '1713175071', 'Test Dash Entregas Max',
-                    'Av Test 456', '0990000002', 100.00, 0.00,
+                    :id, :destinatario_id, :snap_id, :snap_nombre,
+                    :snap_dir, :snap_tel, 100.00, 0.00,
                     'activa', true,
                     NOW() + (:i * INTERVAL '1 second'),
                     NOW() + (:i * INTERVAL '1 second')
                 )
             """),
-            {"id": uuid.uuid4(), "destinatario_id": destinatario_id, "i": i},
+            {
+                "id": uuid.uuid4(),
+                "destinatario_id": destinatario_id,
+                "i": i,
+                "snap_id": _es.process_bind_param("1713175071", None),
+                "snap_nombre": _es.process_bind_param("Test Dash Entregas Max", None),
+                "snap_dir": _es.process_bind_param("Av Test 456", None),
+                "snap_tel": _es.process_bind_param("0990000002", None),
+            },
         )
     await db_session.flush()
 

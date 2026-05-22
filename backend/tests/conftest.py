@@ -3,7 +3,6 @@ import uuid
 from collections.abc import AsyncGenerator
 
 import bcrypt
-import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
@@ -17,7 +16,6 @@ from app.config import settings  # noqa: E402
 from app.dependencies.db import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models.base import Base  # noqa: E402
-from app.utils.rate_limit import email_failure_tracker, ip_login_limiter  # noqa: E402
 
 DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
@@ -87,10 +85,15 @@ async def db_session(
     await session.close()
 
 
-@pytest.fixture(autouse=True)
-def reset_rate_limiters() -> None:
-    ip_login_limiter.clear_all()
-    email_failure_tracker.clear_all()
+@pytest_asyncio.fixture(autouse=True)
+async def reset_rate_limiters(
+    db_connection: AsyncConnection,
+) -> AsyncGenerator[None, None]:
+    """Limpia auth_attempts antes de cada test.
+    Usa DELETE (ROW EXCLUSIVE) en vez de TRUNCATE (ACCESS EXCLUSIVE) para
+    no bloquear los INSERT autónomos del rate limiter durante el test."""
+    await db_connection.execute(text("DELETE FROM auth_attempts"))
+    yield
 
 
 @pytest_asyncio.fixture

@@ -40,13 +40,18 @@ controlEntregas/
 │   │   ├── routers/         # Capa HTTP — solo reciben y delegan a services
 │   │   ├── dependencies/    # FastAPI Depends: auth (JWT + rol) + db (sesión async)
 │   │   ├── utils/
-│   │   │   ├── fifo.py      # Función pura FIFO — sin dependencia de BD
-│   │   │   ├── audit.py     # Decorator @auditar(accion, entidad)
+│   │   │   ├── fifo.py          # Función pura FIFO — sin dependencia de BD
+│   │   │   ├── audit.py         # Decorator @auditar(accion, entidad)
 │   │   │   ├── validaciones.py  # Validador cédula/RUC ecuatoriano
-│   │   │   └── exceptions.py   # Excepciones tipadas de dominio → HTTP
+│   │   │   ├── exceptions.py    # Excepciones tipadas de dominio → HTTP
+│   │   │   ├── encryption.py    # EncryptedString (Fernet), hmac_hash, mask_*
+│   │   │   ├── rate_limit.py    # Rate limiter DB-backed (auth_attempts table)
+│   │   │   ├── uploads.py       # Lectura chunked de UploadFile con límite de tamaño
+│   │   │   └── request_meta.py  # get_client_ip() — lee X-Forwarded-For
 │   │   └── templates/reportes/ # Plantillas Jinja2 para PDF (WeasyPrint)
 │   ├── migrations/          # Alembic — toda migración tiene upgrade + downgrade
-│   └── tests/               # 19 archivos: un test por dominio + fifo + validaciones
+│   ├── scripts/             # Scripts operativos: unlock_user.py (emergencia), encrypt_existing_data.py
+│   └── tests/               # 21 archivos: dominio + fifo + validaciones + 4 archivos de seguridad
 ├── frontend/                # React application
 │   └── src/
 │       ├── api/client.ts    # Axios con interceptor JWT → 401 redirige a /login
@@ -97,7 +102,7 @@ cd backend && pip install -r requirements.txt
 
 # 3. Configurar variables de entorno
 cp backend/.env.example backend/.env
-# Editar backend/.env con DATABASE_URL, JWT_SECRET_KEY y TEST_DATABASE_URL
+# Editar backend/.env — todas las variables son requeridas (ver tabla más abajo)
 
 # 4. Aplicar migraciones
 cd backend && alembic upgrade head
@@ -123,19 +128,23 @@ cd frontend && npm run dev
 
 ### Variables de entorno requeridas
 
-**Backend (`backend/.env`)**
+**Backend (`backend/.env`)** — todas requeridas, sin valores por defecto en código.
 
 | Variable | Descripción |
 |:---|:---|
 | `DATABASE_URL` | `postgresql+asyncpg://user:pass@host:port/db` |
 | `TEST_DATABASE_URL` | BD separada para tests — nunca la misma que `DATABASE_URL` |
-| `JWT_SECRET_KEY` | Secret aleatorio para firmar tokens JWT |
-| `ENVIRONMENT` | `development` \| `production` |
-| `JWT_EXPIRATION_MINUTES` | Vida del access token en minutos (default: 60) |
-| `JWT_REFRESH_LEEWAY_SECONDS` | Ventana de refresh silencioso tras expirar (default: 7200) |
-| `ENCRYPTION_KEY` | Clave Fernet para cifrado de columnas PII — generar con `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
+| `JWT_SECRET_KEY` | Mínimo 32 caracteres. Generar: `python -c 'import secrets; print(secrets.token_urlsafe(48))'` |
+| `JWT_ALGORITHM` | Algoritmo JWT, e.g. `HS256` |
+| `JWT_EXPIRATION_MINUTES` | Vida del access token en minutos, e.g. `60` |
+| `JWT_REFRESH_LEEWAY_SECONDS` | Ventana de refresh silencioso tras expirar, 60–3600s, e.g. `900` |
+| `CORS_ORIGINS` | JSON array, e.g. `'["http://localhost:5173"]'` |
+| `ENVIRONMENT` | `development` \| `production` — usar `development` en local para habilitar Swagger y CORS abierto |
 | `ADMIN_EMAIL` | Email del usuario administrador inicial |
-| `ADMIN_PASSWORD` | Contraseña del usuario administrador inicial |
+| `ADMIN_PASSWORD` | Contraseña del administrador (8+ chars, mayúscula, dígito, especial) |
+| `ENCRYPTION_KEY` | Clave Fernet para cifrado de columnas PII. Generar: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` — **nunca commitear una clave real** |
+| `MAX_XML_UPLOAD_MB` | Tamaño máximo del XML SRI en MB, 1–50, e.g. `1` |
+| `MAX_REQUEST_BODY_MB` | Límite global del body de requests en MB, 1–50, e.g. `2` |
 
 **Frontend (`frontend/.env`)**
 
@@ -196,6 +205,10 @@ consolidadas por dominio viven en `openspec/specs/{domain}/spec.md`.
 | `actualizar-dependencias-jwt` | Migración de `python-jose` a `PyJWT>=2.9.0` |
 | `seguridad-api-produccion` | Security headers, OpenAPI deshabilitado en prod, logging env-aware |
 | `ci-hardening` | CI enforces quality checks (ruff, black, mypy, bandit, eslint, typecheck) sin `\|\| true`; `ADMIN_PASSWORD` como GitHub secret |
+| `devsecops-b1-b4` | cryptography declarada, ENCRYPTION_KEY validada al arranque, ENVIRONMENT fail-safe a production, fallback plaintext eliminado |
+| `devsecops-a1-a5` | JWT en memoria, defusedxml, upload chunked, rate limit en PostgreSQL, desbloqueo admin, IP real desde X-Forwarded-For |
+| `devsecops-m2-m6` | CSP headers ampliados, JWT_SECRET_KEY mínimo 32 chars, leeway JWT reducido a 900s, límite global de body |
+| `devsecops-new-fixes` | rowcount en reset, simplificación rate_limit a async-only, 27 tests nuevos de seguridad, todas las vars de config requeridas |
 
 Para explorar, proponer o implementar cambios usar los comandos `/opsx:explore`, `/opsx:propose`,
 `/opsx:apply` y `/opsx:archive` dentro de Claude Code.

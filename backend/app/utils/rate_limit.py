@@ -1,36 +1,43 @@
-"""Rate limiter respaldado por PostgreSQL con compatibilidad sync/async.
+"""
+Rate limiter respaldado por PostgreSQL.
 
-Este módulo expone dos instancias reutilizadas por las pruebas y la app:
-- `ip_login_limiter` — para IPs de login.
-- `email_failure_tracker` — para emails con fallos de autenticación.
-
-API compatible:
-- Sin sesión (sync): `check_and_record(key)`, `reset(key)`, `clear_all()` — usan contador en memoria (útil en tests rápidos).
-- Con sesión (async): `await check_and_record(session, key)`, `await reset(session, key)`, `await clear_all(session)` — operan contra la tabla `auth_attempts`.
-
-La implementación busca compatibilidad retroactiva: cuando se llama con `session` (primer arg AsyncSession)
-devuelve una coroutine que puede ser `await`-ed; cuando se llama sin sesión realiza la acción sincrónica.
+Diseñado para funcionar con Cloud Run con min-instances=0 y múltiples
+réplicas: el estado vive en la tabla auth_attempts, no en memoria del
+proceso. La retención de filas se gestiona con pg_cron en Supabase
+(ver DEPLOY.md).
 """
 
-from __future__ import annotations
-
-import threading
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from sqlalchemy import delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.models.auth_attempt import AuthAttempt
 from app.utils.exceptions import LimiteSolicitudes
 
+# Lazy-initialized session factory backed by a NullPool engine so each autonomous
+# commit gets a fresh connection — avoids asyncpg event-loop conflicts and ensures
+# the AuthAttempt INSERT survives the caller's rollback on failed login.
+_autonomous_maker: async_sessionmaker[AsyncSession] | None = None
 
-class _SlidingWindow:
-    """Sliding-window limiter que soporta APIs sync y async.
 
-    - Si se llama como `check_and_record(session, key)` devuelve una coroutine.
-    - Si se llama como `check_and_record(key)` ejecuta el path síncrono en memoria.
-    """
+def _get_autonomous_maker() -> async_sessionmaker[AsyncSession]:
+    global _autonomous_maker
+    if _autonomous_maker is None:
+        from app.config import settings
+
+        _engine = create_async_engine(
+            settings.DATABASE_URL,
+            poolclass=NullPool,
+            connect_args={"statement_cache_size": 0},
+        )
+        _autonomous_maker = async_sessionmaker(_engine, expire_on_commit=False)
+    return _autonomous_maker
+
+
+class _DbSlidingWindow:
+    """Sliding-window limiter persistido en PostgreSQL."""
 
     def __init__(
         self,
@@ -39,134 +46,54 @@ class _SlidingWindow:
         message: str,
         kind: str,
         namespace: str,
-    ):
+    ) -> None:
         self._max = max_calls
         self._window = timedelta(seconds=window_seconds)
         self._message = message
         self._kind = kind
         self._namespace = namespace
 
-        # in-memory fallback state for synchronous API (tests, CLI)
-        self._lock = threading.Lock()
-        self._events: dict[str, list[datetime]] = {}
-
     def _namespaced(self, key: str) -> str:
         return f"{self._namespace}:{key}"
 
-    # ----- synchronous (in-memory) helpers -----
-    def _prune_and_count_sync(self, key: str) -> int:
-        now = datetime.now(timezone.utc)
-        cutoff = now - self._window
-        with self._lock:
-            events = self._events.setdefault(key, [])
-            # prune
-            events[:] = [t for t in events if t >= cutoff]
-            return len(events)
-
-    def _record_sync(self, key: str) -> None:
-        now = datetime.now(timezone.utc)
-        with self._lock:
-            self._events.setdefault(key, []).append(now)
-
-    def check_and_record(self, *args: Any) -> Any:
-        """Overloaded method:
-        - call as `check_and_record(key)` -> performs in-memory check and returns None
-        - call as `check_and_record(session, key)` -> returns coroutine to be awaited
-        """
-        if len(args) == 1:
-            key = args[0]
-            count = self._prune_and_count_sync(key)
-            if count >= self._max:
-                raise LimiteSolicitudes(self._message)
-            self._record_sync(key)
-            return None
-        if len(args) == 2:
-            session, key = args
-            if isinstance(session, AsyncSession):
-                return self._check_and_record_async(session, key)
-        raise TypeError("check_and_record expects (key) or (session, key)")
-
-    # Backward-compatible aliases expected by services/tests
-    def record_failure(self, *args: Any) -> Any:
-        """Alias for check_and_record to preserve older callsites."""
-        return self.check_and_record(*args)
-
-    def is_blocked(self, *args: Any) -> Any:
-        """Check blocked state sync or async.
-
-        - `is_blocked(key)` -> bool
-        - `await is_blocked(session, key)` -> bool
-        """
-        if len(args) == 1:
-            key = args[0]
-            return self._prune_and_count_sync(key) >= self._max
-        if len(args) == 2:
-            session, key = args
-            if isinstance(session, AsyncSession):
-                return self._is_blocked_async(session, key)
-        raise TypeError("is_blocked expects (key) or (session, key)")
-
-    async def _is_blocked_async(self, session: AsyncSession, key: str) -> bool:
-        cutoff = datetime.now(timezone.utc) - self._window
-        count_stmt = (
-            select(func.count())
-            .select_from(AuthAttempt)
-            .where(
-                AuthAttempt.key == self._namespaced(key),
-                AuthAttempt.created_at >= cutoff,
-            )
-        )
-        result = await session.execute(count_stmt)
-        count = int(result.scalar() or 0)
-        return count >= self._max
-
-    def reset(self, *args: Any) -> Any:
-        """Reset in-memory or async reset against DB depending on signature."""
-        if len(args) == 1:
-            key = args[0]
-            with self._lock:
-                self._events.pop(key, None)
-            return None
-        if len(args) == 2:
-            session, key = args
-            if isinstance(session, AsyncSession):
-                return self._reset_async(session, key)
-        raise TypeError("reset expects (key) or (session, key)")
-
-    def clear_all(self) -> None:
-        with self._lock:
-            self._events.clear()
-
-    # ----- async DB-backed implementations -----
-
-    async def _check_and_record_async(self, session: AsyncSession, key: str) -> None:
-        cutoff = datetime.now(timezone.utc) - self._window
-        count_stmt = (
-            select(func.count())
-            .select_from(AuthAttempt)
-            .where(
-                AuthAttempt.key == self._namespaced(key),
-                AuthAttempt.created_at >= cutoff,
-            )
-        )
-        result = await session.execute(count_stmt)
-        count = int(result.scalar() or 0)
-        if count >= self._max:
+    async def check_and_record(self, session: AsyncSession, key: str) -> None:
+        """Cuenta intentos en ventana; si excede, lanza LimiteSolicitudes;
+        si no, registra el intento en sesión autónoma para sobrevivir rollbacks."""
+        if await self._count_in_window(session, key) >= self._max:
             raise LimiteSolicitudes(self._message)
-        # insert record; DB commit is managed by caller's transaction
+        # Autonomous session: caller may raise after this call (e.g. wrong password),
+        # rolling back its own transaction — the AuthAttempt must survive that rollback.
+        async with _get_autonomous_maker()() as own_session:
+            async with own_session.begin():
+                own_session.add(AuthAttempt(key=self._namespaced(key), kind=self._kind))
+
+    async def record_failure(self, session: AsyncSession, key: str) -> None:
         session.add(AuthAttempt(key=self._namespaced(key), kind=self._kind))
 
-    async def _reset_async(self, session: AsyncSession, key: str) -> None:
-        await session.execute(
+    async def is_blocked(self, session: AsyncSession, key: str) -> bool:
+        return await self._count_in_window(session, key) >= self._max
+
+    async def reset(self, session: AsyncSession, key: str) -> int:
+        """Borra todos los intentos del key. Devuelve cuántos se borraron."""
+        result = await session.execute(
             delete(AuthAttempt).where(AuthAttempt.key == self._namespaced(key))
         )
+        return int(result.rowcount or 0)  # type: ignore[attr-defined]
 
-    async def clear_all_async(self, session: AsyncSession) -> None:
-        await session.execute(delete(AuthAttempt))
+    async def _count_in_window(self, session: AsyncSession, key: str) -> int:
+        cutoff = datetime.now(timezone.utc) - self._window
+        result = await session.execute(
+            select(func.count())
+            .select_from(AuthAttempt)
+            .where(
+                AuthAttempt.key == self._namespaced(key),
+                AuthAttempt.created_at >= cutoff,
+            )
+        )
+        return int(result.scalar() or 0)
 
 
-# Export two instances used across the app/tests
-ip_login_limiter = _SlidingWindow(
+ip_login_limiter = _DbSlidingWindow(
     max_calls=10,
     window_seconds=60,
     message="Demasiadas solicitudes desde esta IP, inténtelo más tarde",
@@ -174,7 +101,7 @@ ip_login_limiter = _SlidingWindow(
     namespace="ip",
 )
 
-email_failure_tracker = _SlidingWindow(
+email_failure_tracker = _DbSlidingWindow(
     max_calls=5,
     window_seconds=15 * 60,
     message="Demasiados intentos para este email, inténtelo más tarde",

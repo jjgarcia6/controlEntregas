@@ -31,14 +31,15 @@ class Settings(BaseSettings):
     # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     # REQUERIDA. Sin default. DEBE proveerse vía env-var o GCP Secret Manager.
     ENCRYPTION_KEY: str
-    JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRATION_MINUTES: int = 60
-    JWT_REFRESH_LEEWAY_SECONDS: int = 900
-    CORS_ORIGINS: str = '["http://localhost:5173"]'
-    ENVIRONMENT: str = "production"
-    ADMIN_EMAIL: str = "admin@sistema.com"
+    JWT_ALGORITHM: str
+    JWT_EXPIRATION_MINUTES: int
+    JWT_REFRESH_LEEWAY_SECONDS: int
+    CORS_ORIGINS: str
+    ENVIRONMENT: str
+    ADMIN_EMAIL: str
     ADMIN_PASSWORD: str
-    MAX_XML_UPLOAD_MB: int = 1
+    MAX_XML_UPLOAD_MB: int
+    MAX_REQUEST_BODY_MB: int
 
     @property
     def cors_origins_list(self) -> List[str]:
@@ -81,8 +82,6 @@ class Settings(BaseSettings):
         if v < 1 or v > 50:
             raise ValueError("MAX_XML_UPLOAD_MB debe estar entre 1 y 50")
         return v
-
-    MAX_REQUEST_BODY_MB: int = 2
 
     @field_validator("MAX_REQUEST_BODY_MB", mode="after")
     @classmethod

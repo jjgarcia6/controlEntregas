@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 
@@ -120,3 +121,84 @@ async def test_cambiar_password(test_client: AsyncClient) -> None:
     )
     assert login_resp.status_code == 200
     assert "token" in login_resp.json()
+
+
+# ─── A4-bis: desbloquear endpoint ───────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a4bis_admin_desbloquea_usuario_y_audita(
+    test_client: AsyncClient,
+    db_session: AsyncSession,
+) -> None:
+    """Admin puede desbloquear un usuario con intentos fallidos; queda auditado."""
+    from app.utils.rate_limit import email_failure_tracker
+
+    admin_login = await test_client.post(
+        "/auth/login",
+        json={"email": settings.ADMIN_EMAIL, "password": settings.ADMIN_PASSWORD},
+    )
+    admin_token = admin_login.json()["token"]
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    op_resp = await test_client.post(
+        "/usuarios",
+        json={
+            "email": "bloqueado@test.com",
+            "password": "Operador123!",
+            "nombre": "Usuario Bloqueado",
+            "rol": "operador",
+        },
+        headers=headers,
+    )
+    assert op_resp.status_code == 201
+    op_id = op_resp.json()["id"]
+
+    # Insert failures directly via db_session (bypasses login rollback issue)
+    for _ in range(5):
+        await email_failure_tracker.record_failure(db_session, "bloqueado@test.com")
+    await db_session.flush()
+
+    assert await email_failure_tracker.is_blocked(db_session, "bloqueado@test.com")
+
+    unlock_resp = await test_client.post(
+        f"/usuarios/{op_id}/desbloquear", headers=headers
+    )
+    assert unlock_resp.status_code == 200
+    data = unlock_resp.json()
+    assert data["intentos_eliminados"] == 5
+    assert data["email"] == "bloqueado@test.com"
+
+    assert not await email_failure_tracker.is_blocked(db_session, "bloqueado@test.com")
+
+
+@pytest.mark.asyncio
+async def test_a4bis_operador_no_puede_desbloquear(test_client: AsyncClient) -> None:
+    """Solo admin puede desbloquear; un operador recibe 403."""
+    admin_login = await test_client.post(
+        "/auth/login",
+        json={"email": settings.ADMIN_EMAIL, "password": settings.ADMIN_PASSWORD},
+    )
+    admin_headers = {"Authorization": f"Bearer {admin_login.json()['token']}"}
+    await test_client.post(
+        "/usuarios",
+        json={
+            "email": "operador_no_admin@test.com",
+            "password": "Operador123!",
+            "nombre": "Operador",
+            "rol": "operador",
+        },
+        headers=admin_headers,
+    )
+
+    op_login = await test_client.post(
+        "/auth/login",
+        json={"email": "operador_no_admin@test.com", "password": "Operador123!"},
+    )
+    op_headers = {"Authorization": f"Bearer {op_login.json()['token']}"}
+
+    resp = await test_client.post(
+        "/usuarios/00000000-0000-0000-0000-000000000001/desbloquear",
+        headers=op_headers,
+    )
+    assert resp.status_code == 403

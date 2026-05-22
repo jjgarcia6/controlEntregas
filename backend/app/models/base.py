@@ -15,6 +15,11 @@ class AuditMixin:
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
     )
+    # Nullable intencionalmente: el admin bootstrap del seed.py se crea antes
+    # de que exista cualquier usuario en la BD. La spec original (PROYECTO_ESPECIFICACION.md
+    # §"Esquema base de auditoría") decía NOT NULL, pero el caso de bootstrap obliga
+    # a la excepción. Toda creación posterior al bootstrap debe completar este campo
+    # a nivel servicio.
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("usuarios.id", use_alter=True, name="fk_created_by_usuarios"),
         nullable=True,
